@@ -1,0 +1,230 @@
+{
+  "bread": {
+    "name": "Bread",
+    "price": 50000,
+    "category": "food",
+    "hunger": 10
+  },
+
+  "meatpie": {
+    "name": "Meat Pie",
+    "price": 150000,
+    "category": "food",
+    "hunger": 15
+  },
+
+  "burger": {
+    "name": "Burger",
+    "price": 350000,
+    "category": "food",
+    "hunger": 25
+  },
+
+  "shawarma": {
+    "name": "Shawarma",
+    "price": 500000,
+    "category": "food",
+    "hunger": 30
+  },
+
+  "pizza": {
+    "name": "Pizza",
+    "price": 750000,
+    "category": "food",
+    "hunger": 40
+  },
+
+  "jollof": {
+    "name": "Jollof Rice",
+    "price": 1000000,
+    "category": "food",
+    "hunger": 50
+  },
+
+  "chickenchips": {
+    "name": "Chicken & Chips",
+    "price": 1500000,
+    "category": "food",
+    "hunger": 60
+  },
+
+  "water": {
+    "name": "Water",
+    "price": 20000,
+    "category": "drink",
+    "hydration": 15
+  },
+
+  "coke": {
+    "name": "Coke",
+    "price": 100000,
+    "category": "drink",
+    "hydration": 10
+  },
+
+  "fanta": {
+    "name": "Fanta",
+    "price": 100000,
+    "category": "drink",
+    "hydration": 10
+  },
+
+  "sprite": {
+    "name": "Sprite",
+    "price": 100000,
+    "category": "drink",
+    "hydration": 10
+  },
+
+  "coffee": {
+    "name": "Coffee",
+    "price": 250000,
+    "category": "drink",
+    "hydration": 5,
+    "energy": 15
+  },
+
+  "energydrink": {
+    "name": "Energy Drink",
+    "price": 300000,
+    "category": "drink",
+    "hydration": 5,
+    "energy": 25
+  },
+
+  "beer": {
+    "name": "Beer",
+    "price": 400000,
+    "category": "alcohol",
+    "intoxication": 10
+  },
+
+  "wine": {
+    "name": "Wine",
+    "price": 1000000,
+    "category": "alcohol",
+    "intoxication": 15
+  },
+
+  "champagne": {
+    "name": "Champagne",
+    "price": 3000000,
+    "category": "alcohol",
+    "intoxication": 25
+  },
+
+  "whiskey": {
+    "name": "Whiskey",
+    "price": 5000000,
+    "category": "alcohol",
+    "intoxication": 35
+  },
+
+  "vodka": {
+    "name": "Vodka",
+    "price": 6000000,
+    "category": "alcohol",
+    "intoxication": 40
+  },
+
+  "hennessyxo": {
+    "name": "Hennessy XO",
+    "price": 10000000,
+    "category": "alcohol",
+    "intoxication": 45
+  },
+
+  "macallan18": {
+    "name": "Macallan 18",
+    "price": 20000000,
+    "category": "alcohol",
+    "intoxication": 55
+  },
+
+  "cigarette": {
+    "name": "Cigarette",
+    "price": 200000,
+    "category": "smoke",
+    "nicotine": 10
+  },
+
+  "bensonhedges": {
+    "name": "Benson & Hedges",
+    "price": 500000,
+    "category": "smoke",
+    "nicotine": 15
+  },
+
+  "marlborogold": {
+    "name": "Marlboro Gold",
+    "price": 750000,
+    "category": "smoke",
+    "nicotine": 20
+  },
+
+  "cubancigar": {
+    "name": "Cuban Cigar",
+    "price": 1500000,
+    "category": "smoke",
+    "nicotine": 20
+  },
+
+  "montecristo": {
+    "name": "Montecristo",
+    "price": 3000000,
+    "category": "smoke",
+    "nicotine": 25
+  },
+
+  "cohiba": {
+    "name": "Cohiba",
+    "price": 5000000,
+    "category": "smoke",
+    "nicotine": 30
+  },
+
+  "scottishloud": {
+    "name": "Scottish Loud",
+    "price": 1500000,
+    "category": "smoke",
+    "nicotine": 10,
+    "intoxication": 10,
+    "mood": 15
+  },
+
+  "canadianloud": {
+    "name": "Canadian Loud",
+    "price": 3500000,
+    "category": "smoke",
+    "nicotine": 15,
+    "intoxication": 20,
+    "mood": 25
+  },
+
+  "purplehaze": {
+    "name": "Purple Haze",
+    "price": 7500000,
+    "category": "smoke",
+    "nicotine": 20,
+    "intoxication": 35,
+    "mood": 40
+  },
+
+  "whitewidow": {
+    "name": "White Widow",
+    "price": 10000000,
+    "category": "smoke",
+    "nicotine": 25,
+    "intoxication": 40,
+    "mood": 45
+  },
+
+  "ogkush": {
+    "name": "OG Kush",
+    "price": 15000000,
+    "category": "smoke",
+    "nicotine": 30,
+    "intoxication": 50,
+    "mood": 50
+  }
+}
