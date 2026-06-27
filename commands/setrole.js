@@ -5,62 +5,141 @@ const {
 } = require("discord.js");
 
 const {
-    loadOrganization,
-    saveOrganization
+    getOrganization,
+    setPermissionRole
 } = require("../core/organizationEngine");
 
 module.exports = {
+
     data: new SlashCommandBuilder()
+
         .setName("setrole")
-        .setDescription("Link a Discord role to a TNN department.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+
+        .setDescription("Assign a management role to your organization.")
+
         .addStringOption(option =>
+
             option
-                .setName("department")
-                .setDescription("Department name")
+
+                .setName("permission")
+
+                .setDescription("Permission to configure")
+
                 .setRequired(true)
+
                 .addChoices(
-                    { name: "Owner", value: "owner" },
-                    { name: "CEO", value: "ceo" },
-                    { name: "Finance", value: "finance" },
-                    { name: "Manager", value: "manager" },
-                    { name: "Chef", value: "chef" },
-                    { name: "Staff", value: "staff" }
+
+                    {
+                        name: "Executive",
+                        value: "executiveRole"
+                    },
+
+                    {
+                        name: "Finance",
+                        value: "financeRole"
+                    },
+
+                    {
+                        name: "Cafeteria",
+                        value: "cafeteriaRole"
+                    },
+
+                    {
+                        name: "Hospital",
+                        value: "hospitalRole"
+                    },
+
+                    {
+                        name: "Security",
+                        value: "securityRole"
+                    }
+
                 )
+
         )
+
         .addRoleOption(option =>
+
             option
+
                 .setName("role")
-                .setDescription("Discord role")
+
+                .setDescription("Select the Discord role")
+
                 .setRequired(true)
+
+        )
+
+        .setDefaultMemberPermissions(
+            PermissionFlagsBits.Administrator
         ),
 
     async execute(interaction) {
 
-        const department = interaction.options.getString("department");
-        const role = interaction.options.getRole("role");
+        const organization = getOrganization(interaction.guild.id);
 
-        const organization = loadOrganization();
+        if (!organization) {
 
-        if (!organization.roles) {
-            organization.roles = {};
+            return interaction.reply({
+
+                content:
+                    "❌ Create an organization first using **/createorganization**.",
+
+                ephemeral: true
+
+            });
+
         }
 
-        organization.roles[department] = role.id;
+        if (!organization.initialized) {
 
-        saveOrganization(organization);
+            return interaction.reply({
+
+                content:
+                    "❌ Initialize your organization first using **/initialize**.",
+
+                ephemeral: true
+
+            });
+
+        }
+
+        const permission =
+            interaction.options.getString("permission");
+
+        const role =
+            interaction.options.getRole("role");
+
+        setPermissionRole(
+
+            interaction.guild.id,
+
+            permission,
+
+            role.id
+
+        );
 
         const embed = new EmbedBuilder()
+
             .setColor(0x5865F2)
-            .setTitle("✅ Department Role Linked")
+
+            .setTitle("✅ Role Assigned")
+
             .setDescription(
-                `**${department.toUpperCase()}** is now linked to ${role}.`
+
+                `**${role.name}** has been assigned as **${permission}**.`
+
             )
+
             .setTimestamp();
 
         await interaction.reply({
+
             embeds: [embed]
+
         });
 
     }
+
 };
