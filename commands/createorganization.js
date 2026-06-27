@@ -5,56 +5,78 @@ const {
 } = require("discord.js");
 
 const {
-    loadOrganization,
-    saveOrganization
+    createOrganization,
+    getOrganization
 } = require("../core/organizationEngine");
 
 module.exports = {
+
     data: new SlashCommandBuilder()
+
         .setName("createorganization")
-        .setDescription("Create your organization.")
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+
+        .setDescription("Creates a new organization for this server.")
+
         .addStringOption(option =>
+
             option
+
                 .setName("name")
+
                 .setDescription("Organization name")
+
                 .setRequired(true)
+
+        )
+
+        .setDefaultMemberPermissions(
+            PermissionFlagsBits.Administrator
         ),
 
     async execute(interaction) {
 
-        const organization = loadOrganization();
+        let organization = getOrganization(interaction.guild.id);
 
-        if (organization.name) {
-            return interaction.reply({
-                content: "❌ An organization already exists.",
-                ephemeral: true
-            });
+        if (!organization) {
+
+            organization = createOrganization(interaction.guild);
+
         }
 
-        const name = interaction.options.getString("name");
+        if (organization.initialized) {
 
-        organization.name = name;
-        organization.ownerId = interaction.user.id;
-        organization.createdAt = Date.now();
+            return interaction.reply({
 
-        saveOrganization(organization);
+                content:
+                    "❌ This server already has an initialized organization.",
+
+                ephemeral: true
+
+            });
+
+        }
+
+        organization.organizationName =
+            interaction.options.getString("name");
 
         const embed = new EmbedBuilder()
+
             .setColor(0x00AE86)
+
             .setTitle("🏢 Organization Created")
+
             .setDescription(
-                `**${name}** has been successfully registered.\n\n` +
-                `Owner: ${interaction.user}`
+                `**${organization.organizationName}** has been created successfully.\n\nRun **/initialize** to finish setting up your organization.`
             )
-            .setFooter({
-                text: "TNN Organization System"
-            })
+
             .setTimestamp();
 
         await interaction.reply({
+
             embeds: [embed]
+
         });
 
     }
+
 };
