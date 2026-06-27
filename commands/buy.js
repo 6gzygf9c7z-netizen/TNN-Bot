@@ -3,94 +3,148 @@ const {
     EmbedBuilder
 } = require("discord.js");
 
+const menu = require("../data/menu.json");
+
 const {
     getAccount,
-    removeMoney,
     saveAccount
 } = require("../core/accountsEngine");
 
 const {
-    getItem
+    addItem
 } = require("../core/inventoryEngine");
 
 module.exports = {
+
     data: new SlashCommandBuilder()
+
         .setName("buy")
-        .setDescription("Buy an item from the cafeteria")
+
+        .setDescription("Purchase an item from the cafeteria.")
+
         .addStringOption(option =>
+
             option
+
                 .setName("item")
-                .setDescription("Item to buy")
+
+                .setDescription("Item to purchase")
+
                 .setRequired(true)
+
         ),
 
     async execute(interaction) {
 
-        const itemName = interaction.options
-            .getString("item")
-            .toLowerCase();
-
         const account = getAccount(interaction.user.id);
 
         if (!account) {
+
             return interaction.reply({
+
                 content: "❌ You don't have an account yet.",
+
                 ephemeral: true
+
             });
+
         }
 
-        const item = getItem(itemName);
+        const search = interaction.options
+            .getString("item")
+            .toLowerCase();
 
-        if (!item) {
+        let selectedItem = null;
+
+        for (const category of Object.values(menu)) {
+
+            for (const item of Object.values(category)) {
+
+                if (
+
+                    item.name.toLowerCase() === search
+
+                ) {
+
+                    selectedItem = item;
+
+                    break;
+
+                }
+
+            }
+
+            if (selectedItem) break;
+
+        }
+
+        if (!selectedItem) {
+
             return interaction.reply({
-                content: "❌ That item doesn't exist.",
+
+                content: "❌ Item not found on the menu.",
+
                 ephemeral: true
+
             });
+
         }
 
-        if (account.wallet < item.price) {
+        if (account.wallet < selectedItem.price) {
+
             return interaction.reply({
-                content: "💸 You don't have enough money.",
+
+                content:
+                    `❌ You need ₦${selectedItem.price.toLocaleString()} but only have ₦${account.wallet.toLocaleString()}.`,
+
                 ephemeral: true
+
             });
+
         }
 
-        removeMoney(interaction.user.id, item.price);
+        account.wallet -= selectedItem.price;
 
-        if (!account.inventory) {
-            account.inventory = {};
-        }
+        saveAccount(account);
 
-        if (!account.inventory[itemName]) {
-            account.inventory[itemName] = 0;
-        }
+        addItem(
 
-        account.inventory[itemName]++;
+            interaction.user.id,
 
-        saveAccount(interaction.user.id, account);
+            selectedItem.name,
+
+            1
+
+        );
 
         const embed = new EmbedBuilder()
+
             .setColor(0x2ECC71)
+
             .setTitle("🛒 Purchase Successful")
+
             .setDescription(
-                `You bought **${item.displayName}** for **₦${item.price.toLocaleString()}**.`
+
+                `You bought **${selectedItem.name}** for **₦${selectedItem.price.toLocaleString()}**.`
+
             )
-            .addFields(
-                {
-                    name: "Wallet",
-                    value: `₦${account.wallet.toLocaleString()}`,
-                    inline: true
-                },
-                {
-                    name: "Owned",
-                    value: `${account.inventory[itemName]}`,
-                    inline: true
-                }
-            );
+
+            .addFields({
+
+                name: "Wallet Balance",
+
+                value: `₦${account.wallet.toLocaleString()}`
+
+            })
+
+            .setTimestamp();
 
         await interaction.reply({
+
             embeds: [embed]
+
         });
 
     }
+
 };
