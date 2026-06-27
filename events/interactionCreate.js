@@ -1,61 +1,21 @@
 const { Events } = require("discord.js");
-const fs = require("fs");
-const path = require("path");
-
-const commands = new Map();
-
-const commandsPath = path.join(__dirname, "..", "commands");
-
-if (fs.existsSync(commandsPath)) {
-
-    const commandFiles = fs
-        .readdirSync(commandsPath)
-        .filter(file => file.endsWith(".js"));
-
-    for (const file of commandFiles) {
-
-        const command = require(
-            path.join(commandsPath, file)
-        );
-
-        if (
-            command.data &&
-            command.execute
-        ) {
-
-            commands.set(
-                command.data.name,
-                command
-            );
-
-        }
-
-    }
-
-}
 
 module.exports = {
 
     name: Events.InteractionCreate,
 
-    async execute(interaction) {
+    async execute(interaction, client) {
 
         if (!interaction.isChatInputCommand()) {
-
             return;
-
         }
 
-        const command = commands.get(
-
+        const command = client.commands.get(
             interaction.commandName
-
         );
 
         if (!command) {
-
             return;
-
         }
 
         try {
@@ -66,31 +26,15 @@ module.exports = {
 
             console.error(error);
 
-            if (
-                interaction.replied ||
-                interaction.deferred
-            ) {
+            const reply = {
+                content: "An error occurred while executing this command.",
+                ephemeral: true
+            };
 
-                await interaction.followUp({
-
-                    content:
-                        "An error occurred while executing this command.",
-
-                    ephemeral: true
-
-                });
-
+            if (interaction.replied || interaction.deferred) {
+                await interaction.followUp(reply);
             } else {
-
-                await interaction.reply({
-
-                    content:
-                        "An error occurred while executing this command.",
-
-                    ephemeral: true
-
-                });
-
+                await interaction.reply(reply);
             }
 
         }

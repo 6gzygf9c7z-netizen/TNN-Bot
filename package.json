@@ -4,9 +4,12 @@
   "description": "TNN OS Discord Bot",
   "main": "index.js",
   "type": "commonjs",
+
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "deploy": "node deploy-commands.js"
   },
+
   "keywords": [
     "discord",
     "tnn",
@@ -14,8 +17,10 @@
     "economy",
     "roleplay"
   ],
+
   "author": "Ancestor",
   "license": "MIT",
+
   "dependencies": {
     "discord.js": "^14.21.0",
     "dotenv": "^17.2.1"

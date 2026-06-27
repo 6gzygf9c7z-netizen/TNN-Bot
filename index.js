@@ -1,8 +1,11 @@
-const fs = require("fs");
 require("dotenv").config();
+
+const fs = require("fs");
+const path = require("path");
 
 const {
     Client,
+    Collection,
     GatewayIntentBits
 } = require("discord.js");
 
@@ -14,52 +17,91 @@ const client = new Client({
     ]
 });
 
-const PREFIX = "!";
+client.commands = new Collection();
 
-const commands = new Map();
+/*
+|--------------------------------------------------------------------------
+| Load Slash Commands
+|--------------------------------------------------------------------------
+*/
 
-const commandFiles = fs
-    .readdirSync("./commands")
-    .filter(file => file.endsWith(".js"));
+const commandsPath = path.join(__dirname, "commands");
 
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    commands.set(command.name, command);
+if (fs.existsSync(commandsPath)) {
+
+    const commandFiles = fs
+        .readdirSync(commandsPath)
+        .filter(file => file.endsWith(".js"));
+
+    for (const file of commandFiles) {
+
+        const command = require(
+            path.join(commandsPath, file)
+        );
+
+        if (command.data && command.execute) {
+
+            client.commands.set(
+                command.data.name,
+                command
+            );
+
+        } else {
+
+            console.warn(
+                `[WARNING] ${file} is missing "data" or "execute".`
+            );
+
+        }
+
+    }
+
 }
 
-client.once("ready", () => {
-    console.log(`✅ ${client.user.tag} is online.`);
-});
+/*
+|--------------------------------------------------------------------------
+| Load Events
+|--------------------------------------------------------------------------
+*/
 
-client.on("messageCreate", message => {
+const eventsPath = path.join(__dirname, "events");
 
-    if (message.author.bot) return;
+if (fs.existsSync(eventsPath)) {
 
-    if (!message.content.startsWith(PREFIX)) return;
+    const eventFiles = fs
+        .readdirSync(eventsPath)
+        .filter(file => file.endsWith(".js"));
 
-    const args = message.content
-        .slice(PREFIX.length)
-        .trim()
-        .split(/ +/);
+    for (const file of eventFiles) {
 
-    const commandName = args
-        .shift()
-        .toLowerCase();
-
-    const command = commands.get(commandName);
-
-    if (!command) return;
-
-    try {
-        command.execute(message, args);
-    } catch (error) {
-
-        console.error(error);
-
-        message.reply(
-            "⚠ TNN Bot encountered an error while executing that command."
+        const event = require(
+            path.join(eventsPath, file)
         );
+
+        if (event.once) {
+
+            client.once(
+                event.name,
+                (...args) => event.execute(...args, client)
+            );
+
+        } else {
+
+            client.on(
+                event.name,
+                (...args) => event.execute(...args, client)
+            );
+
+        }
+
     }
-});
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Login
+|--------------------------------------------------------------------------
+*/
 
 client.login(process.env.TOKEN);
