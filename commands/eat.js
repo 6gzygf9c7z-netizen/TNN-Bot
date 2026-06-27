@@ -1,90 +1,61 @@
-const fs = require('fs');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder
+} = require("discord.js");
+
+const {
+    getAccount,
+    updateNeed,
+    saveAccount
+} = require("../core/accountsEngine");
 
 module.exports = {
-    name: 'eat',
+    data: new SlashCommandBuilder()
+        .setName("eat")
+        .setDescription("Eat food from your inventory.")
+        .addStringOption(option =>
+            option
+                .setName("item")
+                .setDescription("Food item to eat")
+                .setRequired(true)
+        ),
 
-    execute(message, args) {
+    async execute(interaction) {
+        const userId = interaction.user.id;
+        const item = interaction.options.getString("item").toLowerCase();
 
-        const menu = JSON.parse(
-            fs.readFileSync('./data/menu.json')
-        );
+        const account = getAccount(userId);
 
-        const inventory = JSON.parse(
-            fs.readFileSync('./data/inventory.json')
-        );
+        if (!account) {
+            return interaction.reply({
+                content: "❌ You don't have a wallet yet. Use **/wallet** first.",
+                ephemeral: true
+            });
+        }
 
-        const stats = JSON.parse(
-            fs.readFileSync('./data/stats.json')
-        );
+        if (!account.inventory || !account.inventory[item] || account.inventory[item] <= 0) {
+            return interaction.reply({
+                content: `❌ You don't own any **${item}**.`,
+                ephemeral: true
+            });
+        }
 
-        const userId = message.author.id;
+        account.inventory[item]--;
 
-        const itemName = args[0]?.toLowerCase();
+        updateNeed(userId, "hunger", 35);
 
-        if (!itemName) {
-            return message.reply(
-                '🍔 Please specify a food item.'
+        saveAccount(userId, account);
+
+        const embed = new EmbedBuilder()
+            .setColor(0x2ECC71)
+            .setTitle("🍽️ Meal Consumed")
+            .setDescription(
+                `${interaction.user} ate **${item}**.\n\n` +
+                `😋 Hunger restored by **35%**.`
             );
-        }
 
-        const item = menu[itemName];
-
-        if (!item) {
-            return message.reply(
-                '❌ That item does not exist.'
-            );
-        }
-
-        if (item.category !== 'food') {
-            return message.reply(
-                '❌ That item is not food.'
-            );
-        }
-
-        if (
-            !inventory[userId] ||
-            !inventory[userId][itemName] ||
-            inventory[userId][itemName] < 1
-        ) {
-            return message.reply(
-                '📦 You do not own that item.'
-            );
-        }
-
-        if (!stats[userId]) {
-
-            stats[userId] = {
-                hunger: 100,
-                hydration: 100,
-                nicotine: 0,
-                intoxication: 0,
-                energy: 100
-            };
-
-        }
-
-        inventory[userId][itemName]--;
-
-        stats[userId].hunger += item.hunger;
-
-        if (stats[userId].hunger > 100) {
-            stats[userId].hunger = 100;
-        }
-
-        fs.writeFileSync(
-            './data/inventory.json',
-            JSON.stringify(inventory, null, 2)
-        );
-
-        fs.writeFileSync(
-            './data/stats.json',
-            JSON.stringify(stats, null, 2)
-        );
-
-        message.reply(
-            `🍔 You ate ${item.name}.\n` +
-            `Hunger +${item.hunger}`
-        );
-
+        await interaction.reply({
+            embeds: [embed]
+        });
     }
 };

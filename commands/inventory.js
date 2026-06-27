@@ -1,44 +1,50 @@
-const fs = require('fs');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder
+} = require("discord.js");
+
+const {
+    getAccount
+} = require("../core/accountsEngine");
 
 module.exports = {
-    name: 'inventory',
+    data: new SlashCommandBuilder()
+        .setName("inventory")
+        .setDescription("View your inventory."),
 
-    execute(message) {
+    async execute(interaction) {
 
-        const inventory = JSON.parse(
-            fs.readFileSync('./data/inventory.json')
-        );
+        const account = getAccount(interaction.user.id);
 
-        const userId = message.author.id;
-
-        if (
-            !inventory[userId] ||
-            Object.keys(inventory[userId]).length === 0
-        ) {
-            return message.reply(
-                '🎒 Your inventory is empty.'
-            );
+        if (!account) {
+            return interaction.reply({
+                content: "❌ You don't have an account yet.",
+                ephemeral: true
+            });
         }
 
-        let response =
-            `🎒 ${message.author.username}'s Inventory\n\n`;
+        const inventory = account.inventory || {};
 
-        let totalItems = 0;
+        const items = Object.entries(inventory);
 
-        for (const item in inventory[userId]) {
+        const description = items.length
+            ? items
+                  .map(([name, amount]) => `• **${name}** × ${amount}`)
+                  .join("\n")
+            : "Your inventory is empty.";
 
-            const quantity =
-                inventory[userId][item];
+        const embed = new EmbedBuilder()
+            .setColor(0x3498DB)
+            .setTitle("🎒 Your Inventory")
+            .setDescription(description)
+            .setFooter({
+                text: `Items: ${items.length}`
+            })
+            .setTimestamp();
 
-            response +=
-                `• ${item} x${quantity}\n`;
+        await interaction.reply({
+            embeds: [embed]
+        });
 
-            totalItems += quantity;
-        }
-
-        response +=
-            `\n📦 Total Items: ${totalItems}`;
-
-        message.reply(response);
     }
 };

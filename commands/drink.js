@@ -1,129 +1,45 @@
-const fs = require('fs');
+const {
+    getAccount,
+    updateNeed,
+    removeMoney
+} = require("../core/accountsEngine");
+
+const {
+    removeItem
+} = require("../core/inventoryEngine");
 
 module.exports = {
-    name: 'drink',
+    name: "drink",
+    description: "Drink a beverage",
 
-    execute(message, args) {
+    async execute(interaction) {
 
-        const menu = JSON.parse(
-            fs.readFileSync('./data/menu.json')
-        );
+        const beverage = interaction.options.getString("item");
 
-        const inventory = JSON.parse(
-            fs.readFileSync('./data/inventory.json')
-        );
+        const account = getAccount(interaction.user.id);
 
-        const stats = JSON.parse(
-            fs.readFileSync('./data/stats.json')
-        );
-
-        const userId = message.author.id;
-
-        const itemName = args[0]?.toLowerCase();
-
-        if (!itemName) {
-            return message.reply(
-                '🥤 Please specify a drink.'
-            );
+        if (!account) {
+            return interaction.reply({
+                content: "Create your account first.",
+                ephemeral: true
+            });
         }
 
-        const item = menu[itemName];
+        const inventory = account.inventory || {};
 
-        if (!item) {
-            return message.reply(
-                '❌ That item does not exist.'
-            );
+        if (!inventory[beverage] || inventory[beverage] <= 0) {
+            return interaction.reply({
+                content: `You don't have any ${beverage}.`,
+                ephemeral: true
+            });
         }
 
-        if (
-            item.category !== 'drink' &&
-            item.category !== 'alcohol'
-        ) {
-            return message.reply(
-                '❌ That item is not a drink.'
-            );
-        }
+        removeItem(interaction.user.id, beverage, 1);
 
-        if (
-            !inventory[userId] ||
-            !inventory[userId][itemName] ||
-            inventory[userId][itemName] < 1
-        ) {
-            return message.reply(
-                '📦 You do not own that item.'
-            );
-        }
+        updateNeed(interaction.user.id, "thirst", -30);
 
-        if (!stats[userId]) {
-
-            stats[userId] = {
-                hunger: 100,
-                hydration: 100,
-                nicotine: 0,
-                intoxication: 0,
-                energy: 100
-            };
-
-        }
-
-        inventory[userId][itemName]--;
-
-        if (item.hydration) {
-            stats[userId].hydration += item.hydration;
-        }
-
-        if (item.energy) {
-            stats[userId].energy += item.energy;
-        }
-
-        if (item.intoxication) {
-            stats[userId].intoxication += item.intoxication;
-        }
-
-        if (stats[userId].hydration > 100) {
-            stats[userId].hydration = 100;
-        }
-
-        if (stats[userId].energy > 100) {
-            stats[userId].energy = 100;
-        }
-
-        if (stats[userId].intoxication > 100) {
-            stats[userId].intoxication = 100;
-        }
-
-        fs.writeFileSync(
-            './data/inventory.json',
-            JSON.stringify(inventory, null, 2)
-        );
-
-        fs.writeFileSync(
-            './data/stats.json',
-            JSON.stringify(stats, null, 2)
-        );
-
-        let response =
-            `🥤 You drank ${item.name}.`;
-
-        if (item.intoxication) {
-
-            if (stats[userId].intoxication >= 80) {
-                response +=
-                '\n💀 You are absolutely finished.';
-            } else if (stats[userId].intoxication >= 60) {
-                response +=
-                '\n🤢 You are wasted.';
-            } else if (stats[userId].intoxication >= 40) {
-                response +=
-                '\n🥴 You are drunk.';
-            } else if (stats[userId].intoxication >= 20) {
-                response +=
-                '\n🍺 You are tipsy.';
-            }
-
-        }
-
-        message.reply(response);
-
+        await interaction.reply({
+            content: `🥤 ${interaction.user.username} drank **${beverage}**.\nThirst reduced by **30**.`
+        });
     }
 };

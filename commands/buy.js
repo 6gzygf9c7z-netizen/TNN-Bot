@@ -1,86 +1,96 @@
-const fs = require('fs');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder
+} = require("discord.js");
+
+const {
+    getAccount,
+    removeMoney,
+    saveAccount
+} = require("../core/accountsEngine");
+
+const {
+    getItem
+} = require("../core/inventoryEngine");
 
 module.exports = {
-    name: 'buy',
+    data: new SlashCommandBuilder()
+        .setName("buy")
+        .setDescription("Buy an item from the cafeteria")
+        .addStringOption(option =>
+            option
+                .setName("item")
+                .setDescription("Item to buy")
+                .setRequired(true)
+        ),
 
-    execute(message, args) {
+    async execute(interaction) {
 
-        const menu = JSON.parse(
-            fs.readFileSync('./data/menu.json')
-        );
+        const itemName = interaction.options
+            .getString("item")
+            .toLowerCase();
 
-        const inventory = JSON.parse(
-            fs.readFileSync('./data/inventory.json')
-        );
+        const account = getAccount(interaction.user.id);
 
-        const debts = JSON.parse(
-            fs.readFileSync('./data/debts.json')
-        );
-
-        const cafeteria = JSON.parse(
-            fs.readFileSync('./data/cafeteria.json')
-        );
-
-        const itemName = args[0]?.toLowerCase();
-        const quantity = parseInt(args[1]) || 1;
-
-        if (!itemName) {
-            return message.reply(
-                'Please specify an item to buy.'
-            );
+        if (!account) {
+            return interaction.reply({
+                content: "❌ You don't have an account yet.",
+                ephemeral: true
+            });
         }
 
-        const item = menu[itemName];
+        const item = getItem(itemName);
 
         if (!item) {
-            return message.reply(
-                'That item does not exist on the menu.'
+            return interaction.reply({
+                content: "❌ That item doesn't exist.",
+                ephemeral: true
+            });
+        }
+
+        if (account.wallet < item.price) {
+            return interaction.reply({
+                content: "💸 You don't have enough money.",
+                ephemeral: true
+            });
+        }
+
+        removeMoney(interaction.user.id, item.price);
+
+        if (!account.inventory) {
+            account.inventory = {};
+        }
+
+        if (!account.inventory[itemName]) {
+            account.inventory[itemName] = 0;
+        }
+
+        account.inventory[itemName]++;
+
+        saveAccount(interaction.user.id, account);
+
+        const embed = new EmbedBuilder()
+            .setColor(0x2ECC71)
+            .setTitle("🛒 Purchase Successful")
+            .setDescription(
+                `You bought **${item.displayName}** for **₦${item.price.toLocaleString()}**.`
+            )
+            .addFields(
+                {
+                    name: "Wallet",
+                    value: `₦${account.wallet.toLocaleString()}`,
+                    inline: true
+                },
+                {
+                    name: "Owned",
+                    value: `${account.inventory[itemName]}`,
+                    inline: true
+                }
             );
-        }
 
-        const userId = message.author.id;
+        await interaction.reply({
+            embeds: [embed]
+        });
 
-        if (!inventory[userId]) {
-            inventory[userId] = {};
-        }
-
-        if (!debts[userId]) {
-            debts[userId] = {
-                cafeteria: 0
-            };
-        }
-
-        if (!inventory[userId][itemName]) {
-            inventory[userId][itemName] = 0;
-        }
-
-        inventory[userId][itemName] += quantity;
-
-        const totalCost = item.price * quantity;
-
-        debts[userId].cafeteria += totalCost;
-
-        cafeteria.sales += quantity;
-        cafeteria.revenue += totalCost;
-
-        fs.writeFileSync(
-            './data/inventory.json',
-            JSON.stringify(inventory, null, 2)
-        );
-
-        fs.writeFileSync(
-            './data/debts.json',
-            JSON.stringify(debts, null, 2)
-        );
-
-        fs.writeFileSync(
-            './data/cafeteria.json',
-            JSON.stringify(cafeteria, null, 2)
-        );
-
-        message.reply(
-            `✅ Purchased ${quantity} ${item.name}(s)\n` +
-            `💳 Added ₦${totalCost.toLocaleString()} to your cafeteria debt.`
-        );
     }
 };

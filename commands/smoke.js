@@ -1,133 +1,72 @@
-const fs = require('fs');
+const {
+    SlashCommandBuilder,
+    EmbedBuilder
+} = require("discord.js");
+
+const {
+    getAccount,
+    updateNeed,
+    addHighness,
+    addIntoxication,
+    saveAccount
+} = require("../core/accountsEngine");
 
 module.exports = {
-    name: 'smoke',
+    data: new SlashCommandBuilder()
+        .setName("smoke")
+        .setDescription("Smoke or consume an intoxicating item.")
+        .addStringOption(option =>
+            option
+                .setName("item")
+                .setDescription("Item to smoke")
+                .setRequired(true)
+        ),
 
-    execute(message, args) {
+    async execute(interaction) {
 
-        const menu = JSON.parse(
-            fs.readFileSync('./data/menu.json')
-        );
+        const userId = interaction.user.id;
+        const item = interaction.options.getString("item").toLowerCase();
 
-        const inventory = JSON.parse(
-            fs.readFileSync('./data/inventory.json')
-        );
+        const account = getAccount(userId);
 
-        const stats = JSON.parse(
-            fs.readFileSync('./data/stats.json')
-        );
-
-        const userId = message.author.id;
-
-        const itemName = args[0]?.toLowerCase();
-
-        if (!itemName) {
-            return message.reply(
-                '🚬 Please specify an item to smoke.'
-            );
+        if (!account) {
+            return interaction.reply({
+                content: "❌ You don't have a wallet yet.",
+                ephemeral: true
+            });
         }
 
-        const item = menu[itemName];
-
-        if (!item) {
-            return message.reply(
-                '❌ That item does not exist.'
-            );
+        if (!account.inventory || !account.inventory[item] || account.inventory[item] <= 0) {
+            return interaction.reply({
+                content: `❌ You don't own any **${item}**.`,
+                ephemeral: true
+            });
         }
 
-        if (item.category !== 'smoke') {
-            return message.reply(
-                '❌ That item cannot be smoked.'
-            );
-        }
+        account.inventory[item]--;
 
-        if (
-            !inventory[userId] ||
-            !inventory[userId][itemName] ||
-            inventory[userId][itemName] < 1
-        ) {
-            return message.reply(
-                '📦 You do not own that item.'
-            );
-        }
+        updateNeed(userId, "stress", -20);
 
-        if (!stats[userId]) {
+        addHighness(userId, 25);
 
-            stats[userId] = {
-                hunger: 100,
-                hydration: 100,
-                nicotine: 0,
-                intoxication: 0,
-                energy: 100,
-                mood: 50
-            };
+        addIntoxication(userId, 15);
 
-        }
+        saveAccount(userId, account);
 
-        inventory[userId][itemName]--;
+        const embed = new EmbedBuilder()
+            .setColor(0x9B59B6)
+            .setTitle("🌿 Item Consumed")
+            .setDescription(
+                `${interaction.user} consumed **${item}**.\n\n` +
+                "😌 Stress reduced.\n" +
+                "🌿 Highness increased.\n" +
+                "🍺 Intoxication increased."
+            )
+            .setTimestamp();
 
-        stats[userId].nicotine += item.nicotine || 0;
-        stats[userId].intoxication += item.intoxication || 0;
-        stats[userId].mood += item.mood || 0;
-
-        if (stats[userId].nicotine > 100) {
-            stats[userId].nicotine = 100;
-        }
-
-        if (stats[userId].intoxication > 100) {
-            stats[userId].intoxication = 100;
-        }
-
-        if (stats[userId].mood > 100) {
-            stats[userId].mood = 100;
-        }
-
-        fs.writeFileSync(
-            './data/inventory.json',
-            JSON.stringify(inventory, null, 2)
-        );
-
-        fs.writeFileSync(
-            './data/stats.json',
-            JSON.stringify(stats, null, 2)
-        );
-
-        let response =
-            `🚬 You smoked ${item.name}.\n`;
-
-        if (stats[userId].intoxication >= 80) {
-
-            const events = [
-                '💀 You attempted to salute a vending machine.',
-                '💀 You are negotiating with office furniture.',
-                '💀 You firmly believe the microwave understands economics.',
-                '💀 You tried to unlock a door that was already open.'
-            ];
-
-            response +=
-                events[
-                    Math.floor(
-                        Math.random() * events.length
-                    )
-                ];
-
-        } else if (stats[userId].intoxication >= 60) {
-
-            response +=
-                '🤢 Reality appears optional right now.';
-
-        } else if (stats[userId].intoxication >= 40) {
-
-            response +=
-                '🥴 You are very, very relaxed.';
-
-        } else if (stats[userId].intoxication >= 20) {
-
-            response +=
-                '😌 You are feeling unusually peaceful.';
-        }
-
-        message.reply(response);
+        await interaction.reply({
+            embeds: [embed]
+        });
 
     }
 };

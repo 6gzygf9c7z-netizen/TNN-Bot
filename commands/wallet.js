@@ -1,40 +1,72 @@
-const fs = require("fs");
+const {
+    SlashCommandBuilder,
+    EmbedBuilder
+} = require("discord.js");
+
+const {
+    accountExists,
+    createAccount,
+    getAccount
+} = require("../core/accountsEngine");
 
 module.exports = {
-    name: "wallet",
+    data: new SlashCommandBuilder()
+        .setName("wallet")
+        .setDescription("View your TNN wallet."),
 
-    execute(message) {
+    async execute(interaction) {
 
-        const debts = JSON.parse(
-            fs.readFileSync("./data/debts.json", "utf8")
-        );
+        const userId = interaction.user.id;
 
-        const inventory = JSON.parse(
-            fs.readFileSync("./data/inventory.json", "utf8")
-        );
+        if (!accountExists(userId)) {
+            createAccount(userId);
+        }
 
-        const userId = message.author.id;
+        const account = getAccount(userId);
 
-        const debt = debts[userId]?.debt || 0;
+        const embed = new EmbedBuilder()
+            .setColor(0x00AE86)
+            .setTitle("💳 TNN Wallet")
+            .setThumbnail(interaction.user.displayAvatarURL())
+            .addFields(
+                {
+                    name: "💵 Cash",
+                    value: `₦${account.wallet.toLocaleString()}`,
+                    inline: true
+                },
+                {
+                    name: "🏦 Debt",
+                    value: `₦${account.debt.toLocaleString()}`,
+                    inline: true
+                },
+                {
+                    name: "🍔 Hunger",
+                    value: `${account.hunger}%`,
+                    inline: true
+                },
+                {
+                    name: "💧 Thirst",
+                    value: `${account.thirst}%`,
+                    inline: true
+                },
+                {
+                    name: "🚬 Nicotine",
+                    value: `${account.nicotine}%`,
+                    inline: true
+                },
+                {
+                    name: "🌿 Highness",
+                    value: `${account.highness}%`,
+                    inline: true
+                }
+            )
+            .setFooter({
+                text: "TNN Economy System"
+            })
+            .setTimestamp();
 
-        const items =
-            inventory[userId]
-                ? inventory[userId].length
-                : 0;
-
-        message.reply(
-`💼 TNN STAFF FINANCIAL RECORD
-
-👤 Staff: ${message.author.username}
-
-💳 Outstanding Debt: ₦${debt.toLocaleString()}
-
-📦 Inventory Items: ${items}
-
-📅 Next Salary Deduction:
-₦${debt.toLocaleString()}
-
-⚠ Finance Department has been notified.`
-        );
+        await interaction.reply({
+            embeds: [embed]
+        });
     }
 };

@@ -1,13 +1,23 @@
 {
-  "name": "tnn-bot",
-  "version": "1.0.0",
+  "name": "tnn-os",
+  "version": "2.0.0",
+  "description": "TNN OS Discord Bot",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
     "start": "node index.js"
   },
+  "keywords": [
+    "discord",
+    "tnn",
+    "cafeteria",
+    "economy",
+    "roleplay"
+  ],
+  "author": "Ancestor",
+  "license": "MIT",
   "dependencies": {
-    "discord.js": "^14.0.0",
-    "dotenv": "^16.0.0"
+    "discord.js": "^14.21.0",
+    "dotenv": "^17.2.1"
   }
 }
