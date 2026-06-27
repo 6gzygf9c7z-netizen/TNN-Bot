@@ -2,11 +2,7 @@ require("dotenv").config();
 
 const fs = require("fs");
 const path = require("path");
-
-const {
-    REST,
-    Routes
-} = require("discord.js");
+const { REST, Routes } = require("discord.js");
 
 const commands = [];
 
@@ -18,32 +14,28 @@ const commandFiles = fs
 
 for (const file of commandFiles) {
 
-    const command = require(
-        path.join(commandsPath, file)
-    );
+    const command = require(path.join(commandsPath, file));
 
-    if (command.data) {
+    if (command.data && command.execute) {
         commands.push(command.data.toJSON());
+    } else {
+        console.warn(`[WARNING] ${file} is missing "data" or "execute".`);
     }
-
 }
 
-const rest = new REST({
-    version: "10"
-}).setToken(process.env.TOKEN);
+const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
 (async () => {
 
     try {
 
-        console.log(
-            `Registering ${commands.length} slash commands...`
-        );
+        console.log(`Registering ${commands.length} guild slash commands...`);
 
         await rest.put(
 
-            Routes.applicationCommands(
-                process.env.CLIENT_ID
+            Routes.applicationGuildCommands(
+                process.env.CLIENT_ID,
+                "1510722666234118245"
             ),
 
             {
@@ -52,9 +44,7 @@ const rest = new REST({
 
         );
 
-        console.log(
-            "Slash commands registered successfully."
-        );
+        console.log("Guild slash commands registered successfully!");
 
     } catch (error) {
 

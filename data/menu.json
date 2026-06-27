@@ -1,0 +1,171 @@
+{
+  "food": {
+    "burger": {
+      "name": "Burger",
+      "price": 3500,
+      "currentEffect": "burger"
+    },
+    "pizza": {
+      "name": "Pizza",
+      "price": 7000,
+      "currentEffect": "pizza"
+    },
+    "shawarma": {
+      "name": "Shawarma",
+      "price": 5000,
+      "currentEffect": "shawarma"
+    },
+    "fried_rice": {
+      "name": "Fried Rice",
+      "price": 4500,
+      "currentEffect": "fried_rice"
+    },
+    "jollof_rice": {
+      "name": "Jollof Rice",
+      "price": 4000,
+      "currentEffect": "jollof_rice"
+    },
+    "beans": {
+      "name": "Beans",
+      "price": 2500,
+      "currentEffect": "beans"
+    },
+    "yam_egg": {
+      "name": "Yam & Egg",
+      "price": 3500,
+      "currentEffect": "yam_egg"
+    }
+  },
+
+  "drinks": {
+    "water": {
+      "name": "Water",
+      "price": 300,
+      "currentEffect": "water"
+    },
+    "coke": {
+      "name": "Coca Cola",
+      "price": 800,
+      "currentEffect": "coke"
+    },
+    "fanta": {
+      "name": "Fanta",
+      "price": 800,
+      "currentEffect": "fanta"
+    },
+    "sprite": {
+      "name": "Sprite",
+      "price": 800,
+      "currentEffect": "sprite"
+    },
+    "coffee": {
+      "name": "Coffee",
+      "price": 1800,
+      "currentEffect": "coffee"
+    },
+    "tea": {
+      "name": "Tea",
+      "price": 1500,
+      "currentEffect": "tea"
+    }
+  },
+
+  "alcohol": {
+    "heineken": {
+      "name": "Heineken",
+      "price": 3500,
+      "currentEffect": "heineken"
+    },
+    "guinness": {
+      "name": "Guinness",
+      "price": 3800,
+      "currentEffect": "guinness"
+    },
+    "budweiser": {
+      "name": "Budweiser",
+      "price": 4200,
+      "currentEffect": "budweiser"
+    },
+    "smirnoff": {
+      "name": "Smirnoff",
+      "price": 12000,
+      "currentEffect": "smirnoff"
+    },
+    "jack_daniels": {
+      "name": "Jack Daniel's",
+      "price": 35000,
+      "currentEffect": "jack_daniels"
+    },
+    "jameson": {
+      "name": "Jameson",
+      "price": 38000,
+      "currentEffect": "jameson"
+    },
+    "hennessy_vsop": {
+      "name": "Hennessy VSOP",
+      "price": 70000,
+      "currentEffect": "hennessy_vsop"
+    },
+    "martell_blue_swift": {
+      "name": "Martell Blue Swift",
+      "price": 85000,
+      "currentEffect": "martell_blue_swift"
+    }
+  },
+
+  "smoke": {
+    "og_kush": {
+      "name": "OG Kush",
+      "price": 12000,
+      "currentEffect": "og_kush"
+    },
+    "purple_haze": {
+      "name": "Purple Haze",
+      "price": 15000,
+      "currentEffect": "purple_haze"
+    },
+    "blue_dream": {
+      "name": "Blue Dream",
+      "price": 18000,
+      "currentEffect": "blue_dream"
+    },
+    "white_widow": {
+      "name": "White Widow",
+      "price": 20000,
+      "currentEffect": "white_widow"
+    },
+    "girl_scout_cookies": {
+      "name": "Girl Scout Cookies",
+      "price": 25000,
+      "currentEffect": "girl_scout_cookies"
+    }
+  },
+
+  "cigarettes": {
+    "marlboro": {
+      "name": "Marlboro",
+      "price": 2500,
+      "currentEffect": "marlboro"
+    },
+    "dunhill": {
+      "name": "Dunhill",
+      "price": 3000,
+      "currentEffect": "dunhill"
+    },
+    "benson": {
+      "name": "Benson",
+      "price": 2200,
+      "currentEffect": "benson"
+    },
+    "camel": {
+      "name": "Camel",
+      "price": 2800,
+      "currentEffect": "camel"
+    },
+    "rothmans": {
+      "name": "Rothmans",
+      "price": 2400,
+      "currentEffect": "rothmans"
+    }
+  }
+}

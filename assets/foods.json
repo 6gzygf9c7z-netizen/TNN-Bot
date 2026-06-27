@@ -1,0 +1,50 @@
+{
+  "burger": {
+    "hunger": 35,
+    "thirst": -5,
+    "health": 5,
+    "message": "That burger really hit the spot."
+  },
+
+  "pizza": {
+    "hunger": 45,
+    "thirst": -8,
+    "health": 4,
+    "message": "The cheesy pizza was satisfying."
+  },
+
+  "shawarma": {
+    "hunger": 40,
+    "thirst": -6,
+    "health": 4,
+    "message": "That shawarma disappeared in seconds."
+  },
+
+  "fried_rice": {
+    "hunger": 50,
+    "thirst": -8,
+    "health": 6,
+    "message": "You enjoyed a delicious plate of fried rice."
+  },
+
+  "jollof_rice": {
+    "hunger": 45,
+    "thirst": -7,
+    "health": 6,
+    "message": "Classic Nigerian jollof... absolutely worth it."
+  },
+
+  "beans": {
+    "hunger": 30,
+    "thirst": -4,
+    "health": 10,
+    "message": "Healthy choice."
+  },
+
+  "yam_egg": {
+    "hunger": 38,
+    "thirst": -4,
+    "health": 8,
+    "message": "Simple but filling."
+  }
+}

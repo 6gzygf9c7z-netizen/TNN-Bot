@@ -1,0 +1,100 @@
+{
+  "relaxed": {
+    "title": "Relaxed",
+    "messages": [
+      "is vibing peacefully 🌿",
+      "looks completely relaxed.",
+      "is enjoying the moment."
+    ]
+  },
+
+  "creative": {
+    "title": "Creative",
+    "messages": [
+      "can't stop talking about brilliant ideas.",
+      "is thinking outside the box.",
+      "has entered genius mode."
+    ]
+  },
+
+  "happy": {
+    "title": "Happy",
+    "messages": [
+      "can't stop smiling.",
+      "is laughing at almost everything.",
+      "looks incredibly cheerful."
+    ]
+  },
+
+  "focused": {
+    "title": "Focused",
+    "messages": [
+      "is deeply concentrated.",
+      "looks locked in.",
+      "is unusually productive."
+    ]
+  },
+
+  "euphoric": {
+    "title": "Euphoric",
+    "messages": [
+      "feels unstoppable.",
+      "is floating through life.",
+      "looks like they're having the best day ever."
+    ]
+  },
+
+  "social": {
+    "title": "Social",
+    "messages": [
+      "is buying everyone drinks.",
+      "won't stop chatting.",
+      "is making new friends."
+    ]
+  },
+
+  "calm": {
+    "title": "Calm",
+    "messages": [
+      "is quietly enjoying the atmosphere.",
+      "looks peaceful.",
+      "is taking everything easy."
+    ]
+  },
+
+  "bold": {
+    "title": "Bold",
+    "messages": [
+      "is feeling fearless.",
+      "is speaking with unusual confidence.",
+      "looks ready for anything."
+    ]
+  },
+
+  "reckless": {
+    "title": "Reckless",
+    "messages": [
+      "is making questionable decisions.",
+      "should probably slow down.",
+      "is clearly overdoing it."
+    ]
+  },
+
+  "aggressive": {
+    "title": "Aggressive",
+    "messages": [
+      "is picking arguments.",
+      "looks ready to fight.",
+      "needs to cool off."
+    ]
+  },
+
+  "blackout": {
+    "title": "Blacked Out",
+    "messages": [
+      "has no idea what's happening anymore.",
+      "is completely gone.",
+      "needs medical attention."
+    ]
+  }
+}

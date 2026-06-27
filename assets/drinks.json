@@ -1,0 +1,37 @@
+{
+  "water": {
+    "thirst": 45,
+    "health": 5,
+    "message": "Refreshing."
+  },
+
+  "coke": {
+    "thirst": 20,
+    "health": -2,
+    "message": "Ice cold Coke."
+  },
+
+  "fanta": {
+    "thirst": 18,
+    "health": -2,
+    "message": "Sweet orange goodness."
+  },
+
+  "sprite": {
+    "thirst": 22,
+    "health": -1,
+    "message": "Lemon freshness."
+  },
+
+  "coffee": {
+    "thirst": 5,
+    "energy": 20,
+    "message": "You feel more awake."
+  },
+
+  "tea": {
+    "thirst": 8,
+    "energy": 12,
+    "message": "Warm and relaxing."
+  }
+}

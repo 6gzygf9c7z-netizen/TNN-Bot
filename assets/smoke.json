@@ -1,0 +1,36 @@
+{
+  "og_kush": {
+    "highness": 45,
+    "duration": 1800,
+    "behaviour": "relaxed",
+    "role": "High"
+  },
+
+  "purple_haze": {
+    "highness": 55,
+    "duration": 2100,
+    "behaviour": "creative",
+    "role": "High"
+  },
+
+  "blue_dream": {
+    "highness": 60,
+    "duration": 2400,
+    "behaviour": "happy",
+    "role": "High"
+  },
+
+  "white_widow": {
+    "highness": 50,
+    "duration": 2200,
+    "behaviour": "focused",
+    "role": "High"
+  },
+
+  "girl_scout_cookies": {
+    "highness": 70,
+    "duration": 2700,
+    "behaviour": "euphoric",
+    "role": "High"
+  }
+}

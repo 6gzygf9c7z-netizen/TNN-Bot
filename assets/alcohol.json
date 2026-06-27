@@ -1,0 +1,57 @@
+{
+  "heineken": {
+    "intoxication": 12,
+    "duration": 900,
+    "behaviour": "social",
+    "role": "Tipsy"
+  },
+
+  "guinness": {
+    "intoxication": 15,
+    "duration": 1200,
+    "behaviour": "calm",
+    "role": "Tipsy"
+  },
+
+  "budweiser": {
+    "intoxication": 18,
+    "duration": 1300,
+    "behaviour": "social",
+    "role": "Tipsy"
+  },
+
+  "smirnoff": {
+    "intoxication": 35,
+    "duration": 1800,
+    "behaviour": "bold",
+    "role": "Drunk"
+  },
+
+  "jack_daniels": {
+    "intoxication": 55,
+    "duration": 2400,
+    "behaviour": "reckless",
+    "role": "Wasted"
+  },
+
+  "jameson": {
+    "intoxication": 60,
+    "duration": 2600,
+    "behaviour": "aggressive",
+    "role": "Wasted"
+  },
+
+  "hennessy_vsop": {
+    "intoxication": 80,
+    "duration": 3600,
+    "behaviour": "blackout",
+    "role": "Blacked Out"
+  },
+
+  "martell_blue_swift": {
+    "intoxication": 85,
+    "duration": 4000,
+    "behaviour": "blackout",
+    "role": "Blacked Out"
+  }
+}

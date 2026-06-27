@@ -1,0 +1,66 @@
+{
+  "buy": [
+    "🛒 {user} purchased **{item}** for **₦{price}**.",
+    "💳 {user} bought **{item}**.",
+    "🛍️ Purchase successful... **{item}** has been added to your inventory.",
+    "🏪 The cashier hands {user} a fresh **{item}**."
+  ],
+
+  "eat": [
+    "🍽️ {user} enjoyed **{item}**.",
+    "😋 {user} finished eating **{item}**.",
+    "🍴 Delicious! **{item}** filled your stomach.",
+    "🥘 {user} couldn't resist finishing **{item}**."
+  ],
+
+  "drink": [
+    "🥤 {user} drank **{item}**.",
+    "🧃 {item} tasted refreshing.",
+    "☕ {user} finished **{item}**.",
+    "🥛 {user} quenched their thirst with **{item}**."
+  ],
+
+  "smoke": [
+    "💨 {user} smoked **{item}**.",
+    "🌿 The effects of **{item}** begin to kick in.",
+    "😮‍💨 {user} lights up **{item}**.",
+    "🍃 {item} begins taking effect..."
+  ],
+
+  "alcohol": [
+    "🍺 {user} drank **{item}**.",
+    "🥃 {user} enjoyed a glass of **{item}**.",
+    "🍷 {item} starts warming your body.",
+    "🍻 Cheers! {user} ordered **{item}**."
+  ],
+
+  "inventoryFull": [
+    "🎒 Your inventory is full.",
+    "📦 You don't have enough inventory space.",
+    "👜 Clear some inventory slots first."
+  ],
+
+  "insufficientFunds": [
+    "💸 You don't have enough money.",
+    "🏦 Your wallet can't afford that purchase.",
+    "❌ Transaction declined... insufficient balance."
+  ],
+
+  "itemNotFound": [
+    "❓ That item doesn't exist.",
+    "📋 Item not found in the cafeteria menu.",
+    "🚫 The cafeteria doesn't sell that item."
+  ],
+
+  "alreadyAffected": [
+    "⚠️ You're already under an active effect.",
+    "🧠 Wait until your current effect wears off.",
+    "⏳ You can't stack another effect yet."
+  ],
+
+  "effectEnded": [
+    "✨ You feel normal again.",
+    "😌 The effects have completely worn off.",
+    "🧠 You're back to your normal self."
+  ]
+}
