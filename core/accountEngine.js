@@ -14,9 +14,7 @@ function loadAccounts() {
     }
 
     return JSON.parse(
-
         fs.readFileSync(path, "utf8")
-
     );
 
 }
@@ -24,14 +22,12 @@ function loadAccounts() {
 function saveAccounts(accounts) {
 
     fs.writeFileSync(
-
         path,
-
         JSON.stringify(accounts, null, 4)
-
     );
 
 }
+
 function createAccount(userId, guildId) {
 
     const accounts = loadAccounts();
@@ -117,6 +113,21 @@ function getAccount(userId) {
     return accounts[userId] || null;
 
 }
+
+function getOrCreateAccount(userId, guildId) {
+
+    let account = getAccount(userId);
+
+    if (!account) {
+
+        account = createAccount(userId, guildId);
+
+    }
+
+    return account;
+
+}
+
 function addMoney(userId, amount) {
 
     const accounts = loadAccounts();
@@ -204,11 +215,8 @@ function clearDebt(userId, amount = null) {
     } else {
 
         const payment = Math.min(
-
             amount,
-
             accounts[userId].debt
-
         );
 
         accounts[userId].debt -= payment;
@@ -224,6 +232,7 @@ function clearDebt(userId, amount = null) {
     return accounts[userId];
 
 }
+
 function updateNeed(userId, need, value) {
 
     const accounts = loadAccounts();
@@ -288,9 +297,9 @@ function saveAccount(account) {
 
     const accounts = loadAccounts();
 
-    accounts[account.id] = account;
-
     account.updatedAt = Date.now();
+
+    accounts[account.id] = account;
 
     saveAccounts(accounts);
 
@@ -301,9 +310,7 @@ function saveAccount(account) {
 function getAllAccounts() {
 
     return Object.values(
-
         loadAccounts()
-
     );
 
 }
@@ -336,6 +343,8 @@ module.exports = {
     accountExists,
 
     getAccount,
+
+    getOrCreateAccount,
 
     addMoney,
 

@@ -6,11 +6,12 @@ const {
 const menu = require("../data/menu.json");
 
 const {
-    getAccount,
+    getOrCreateAccount,
     saveAccount
 } = require("../core/accountsEngine");
 
 const {
+    createInventory,
     addItem
 } = require("../core/inventoryEngine");
 
@@ -20,7 +21,7 @@ module.exports = {
 
         .setName("buy")
 
-        .setDescription("Purchase an item from the cafeteria.")
+        .setDescription("Purchase an item from the TNN Cafeteria.")
 
         .addStringOption(option =>
 
@@ -28,7 +29,7 @@ module.exports = {
 
                 .setName("item")
 
-                .setDescription("Item to purchase")
+                .setDescription("Name of the item you want to buy.")
 
                 .setRequired(true)
 
@@ -36,38 +37,32 @@ module.exports = {
 
     async execute(interaction) {
 
-        const account = getAccount(interaction.user.id);
-
-        if (!account) {
-
-            return interaction.reply({
-
-                content: "❌ You don't have an account yet.",
-
-                ephemeral: true
-
-            });
-
-        }
-
         const search = interaction.options
             .getString("item")
+            .trim()
             .toLowerCase();
 
         let selectedItem = null;
+        let selectedItemId = null;
+        let selectedCategory = null;
 
-        for (const category of Object.values(menu)) {
+        for (const [categoryName, category] of Object.entries(menu)) {
 
-            for (const item of Object.values(category)) {
+            for (const [itemId, item] of Object.entries(category)) {
 
                 if (
 
-                    item.name.toLowerCase() === search
+                    item.name.toLowerCase() === search ||
+
+                    itemId.toLowerCase() === search ||
+
+                    item.currentEffect.toLowerCase() === search
 
                 ) {
 
                     selectedItem = item;
-
+                    selectedItemId = itemId;
+                    selectedCategory = categoryName;
                     break;
 
                 }
@@ -82,40 +77,71 @@ module.exports = {
 
             return interaction.reply({
 
-                content: "❌ Item not found on the menu.",
+                content: "❌ That item does not exist on today's cafeteria menu.",
 
                 ephemeral: true
 
             });
 
         }
+
+        const account = getOrCreateAccount(
+
+            interaction.user.id,
+
+            interaction.guild.id
+
+        );
+
+        createInventory(
+
+            interaction.guild.id,
+
+            interaction.user.id
+
+        );
 
         if (account.wallet < selectedItem.price) {
 
             return interaction.reply({
 
                 content:
-                    `❌ You need ₦${selectedItem.price.toLocaleString()} but only have ₦${account.wallet.toLocaleString()}.`,
+                    `❌ You need **₦${selectedItem.price.toLocaleString()}** but only have **₦${account.wallet.toLocaleString()}**.`,
 
                 ephemeral: true
 
             });
 
         }
-
-        account.wallet -= selectedItem.price;
+                account.wallet -= selectedItem.price;
 
         saveAccount(account);
 
         addItem(
 
+            interaction.guild.id,
+
             interaction.user.id,
 
-            selectedItem.name,
+            selectedItemId,
 
             1
 
         );
+
+        const icons = {
+
+            food: "🍔",
+
+            drinks: "🥤",
+
+            alcohol: "🍺",
+
+            smoke: "🌿",
+
+            cigarettes: "🚬"
+
+        };
 
         const embed = new EmbedBuilder()
 
@@ -125,21 +151,53 @@ module.exports = {
 
             .setDescription(
 
-                `You bought **${selectedItem.name}** for **₦${selectedItem.price.toLocaleString()}**.`
+                `${icons[selectedCategory] || "📦"} You purchased **${selectedItem.name}**`
 
             )
 
-            .addFields({
+            .addFields(
 
-                name: "Wallet Balance",
+                {
 
-                value: `₦${account.wallet.toLocaleString()}`
+                    name: "Price",
+
+                    value: `₦${selectedItem.price.toLocaleString()}`,
+
+                    inline: true
+
+                },
+
+                {
+
+                    name: "Remaining Wallet",
+
+                    value: `₦${account.wallet.toLocaleString()}`,
+
+                    inline: true
+
+                },
+
+                {
+
+                    name: "Inventory",
+
+                    value: `1 × ${selectedItem.name} added.`,
+
+                    inline: false
+
+                }
+
+            )
+
+            .setFooter({
+
+                text: "TNN Cafeteria"
 
             })
 
             .setTimestamp();
 
-        await interaction.reply({
+        return interaction.reply({
 
             embeds: [embed]
 
