@@ -5,7 +5,7 @@ const {
 
 const {
     getOrCreateAccount
-} = require("../core/accountEngine");
+} = require("../core/accountsEngine");
 
 module.exports = {
 
