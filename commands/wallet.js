@@ -4,69 +4,88 @@ const {
 } = require("discord.js");
 
 const {
-    accountExists,
-    createAccount,
-    getAccount
-} = require("../core/accountsEngine");
+    getOrCreateAccount
+} = require("../core/accountEngine");
 
 module.exports = {
+
     data: new SlashCommandBuilder()
+
         .setName("wallet")
-        .setDescription("View your TNN wallet."),
+
+        .setDescription("View your TNN Staff Account."),
 
     async execute(interaction) {
 
+        const guildId = interaction.guild.id;
+
         const userId = interaction.user.id;
 
-        if (!accountExists(userId)) {
-            createAccount(userId);
-        }
+        const account = getOrCreateAccount(
 
-        const account = getAccount(userId);
+            userId,
 
-        const embed = new EmbedBuilder()
-            .setColor(0x00AE86)
-            .setTitle("💳 TNN Wallet")
-            .setThumbnail(interaction.user.displayAvatarURL())
-            .addFields(
-                {
-                    name: "💵 Cash",
-                    value: `₦${account.wallet.toLocaleString()}`,
-                    inline: true
-                },
-                {
-                    name: "🏦 Debt",
-                    value: `₦${account.debt.toLocaleString()}`,
-                    inline: true
-                },
-                {
-                    name: "🍔 Hunger",
-                    value: `${account.hunger}%`,
-                    inline: true
-                },
-                {
-                    name: "💧 Thirst",
-                    value: `${account.thirst}%`,
-                    inline: true
-                },
-                {
-                    name: "🚬 Nicotine",
-                    value: `${account.nicotine}%`,
-                    inline: true
-                },
-                {
-                    name: "🌿 Highness",
-                    value: `${account.highness}%`,
-                    inline: true
-                }
+            guildId
+
+        );
+
+        const outstandingBills = account.debt || 0;
+
+        const lastUpdated = account.updatedAt
+            ? `<t:${Math.floor(account.updatedAt / 1000)}:F>`
+            : "Unknown";
+                    const embed = new EmbedBuilder()
+
+            .setColor(0x3498DB)
+
+            .setTitle("🏦 TNN STAFF ACCOUNT")
+
+            .setDescription(
+                "Financial overview of your employee account."
             )
+
+            .addFields(
+
+                {
+                    name: "👤 Employee",
+                    value: `${interaction.user}`,
+                    inline: false
+                },
+
+                {
+                    name: "💳 Outstanding Bills",
+                    value: `₦${outstandingBills.toLocaleString()}`,
+                    inline: true
+                },
+
+                {
+                    name: "🟢 Account Status",
+                    value: outstandingBills > 0
+                        ? "Outstanding Bills"
+                        : "Clear",
+                    inline: true
+                },
+
+                {
+                    name: "📅 Last Updated",
+                    value: lastUpdated,
+                    inline: false
+                }
+
+            )
+
             .setFooter({
-                text: "TNN Economy System"
+                text: "TNN Finance Department"
             })
+
             .setTimestamp();
 
-        await interaction.reply({
+        return interaction.reply({
+
             embeds: [embed]
+
         });
+
     }
+
 };

@@ -3,10 +3,12 @@ const {
     EmbedBuilder
 } = require("discord.js");
 
+const menu = require("../data/menu.json");
+
 const {
     getOrCreateAccount,
     saveAccount
-} = require("../core/accountsEngine");
+} = require("../core/accountEngine");
 
 const {
     hasItem,
@@ -27,7 +29,7 @@ module.exports = {
 
                 .setName("item")
 
-                .setDescription("Food item to eat")
+                .setDescription("Food to eat")
 
                 .setRequired(true)
 
@@ -39,18 +41,51 @@ module.exports = {
 
         const userId = interaction.user.id;
 
-        const item = interaction.options
+        const input = interaction.options
             .getString("item")
             .trim()
             .toLowerCase();
 
         const account = getOrCreateAccount(
-
             userId,
-
             guildId
-
         );
+
+        let itemId = null;
+
+        let food = null;
+
+        for (const [id, item] of Object.entries(menu.food)) {
+
+            if (
+
+                item.name.toLowerCase() === input ||
+
+                id === input
+
+            ) {
+
+                itemId = id;
+
+                food = item;
+
+                break;
+
+            }
+
+        }
+
+        if (!food) {
+
+            return interaction.reply({
+
+                content: "❌ That food doesn't exist.",
+
+                ephemeral: true
+
+            });
+
+        }
 
         if (
 
@@ -60,7 +95,7 @@ module.exports = {
 
                 userId,
 
-                item
+                itemId
 
             )
 
@@ -68,7 +103,7 @@ module.exports = {
 
             return interaction.reply({
 
-                content: `❌ You don't own any **${item}**.`,
+                content: `❌ You don't own any **${food.name}**.`,
 
                 ephemeral: true
 
@@ -82,7 +117,7 @@ module.exports = {
 
             userId,
 
-            item,
+            itemId,
 
             1
 
@@ -92,7 +127,7 @@ module.exports = {
 
             100,
 
-            account.hunger + 35
+            (account.hunger || 100) + 35
 
         );
                 account.updatedAt = Date.now();
@@ -107,7 +142,7 @@ module.exports = {
 
             .setDescription(
 
-                `${interaction.user} ate **${item}**.`
+                `${interaction.user} ate **${food.name}**.\n\n😋 Delicious!`
 
             )
 
@@ -115,7 +150,7 @@ module.exports = {
 
                 {
 
-                    name: "😋 Hunger",
+                    name: "🍗 Hunger",
 
                     value: `${account.hunger}%`,
 
@@ -127,7 +162,7 @@ module.exports = {
 
                     name: "📦 Inventory",
 
-                    value: `1 × ${item} consumed`,
+                    value: `1 × ${food.name} consumed`,
 
                     inline: true
 

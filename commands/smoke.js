@@ -3,70 +3,256 @@ const {
     EmbedBuilder
 } = require("discord.js");
 
+const menu = require("../data/menu.json");
+
 const {
-    getAccount,
-    updateNeed,
-    addHighness,
-    addIntoxication,
+    getOrCreateAccount,
     saveAccount
-} = require("../core/accountsEngine");
+} = require("../core/accountEngine");
+
+const {
+    hasItem,
+    removeItem
+} = require("../core/inventoryEngine");
+
+const {
+    applyEffect,
+    combineEffects
+} = require("../core/effectsEngine");
 
 module.exports = {
+
     data: new SlashCommandBuilder()
+
         .setName("smoke")
-        .setDescription("Smoke or consume an intoxicating item.")
+
+        .setDescription("Smoke cannabis from your inventory.")
+
         .addStringOption(option =>
+
             option
+
                 .setName("item")
-                .setDescription("Item to smoke")
+
+                .setDescription("Cannabis strain to smoke")
+
                 .setRequired(true)
+
         ),
 
     async execute(interaction) {
 
+        const guildId = interaction.guild.id;
+
         const userId = interaction.user.id;
-        const item = interaction.options.getString("item").toLowerCase();
 
-        const account = getAccount(userId);
+        const input = interaction.options
+            .getString("item")
+            .trim()
+            .toLowerCase();
 
-        if (!account) {
-            return interaction.reply({
-                content: "❌ You don't have a wallet yet.",
-                ephemeral: true
-            });
+        const account = getOrCreateAccount(
+            userId,
+            guildId
+        );
+
+        let itemId = null;
+
+        let strain = null;
+
+        for (const [id, item] of Object.entries(menu.smoke)) {
+
+            if (
+
+                item.name.toLowerCase() === input ||
+
+                id === input
+
+            ) {
+
+                itemId = id;
+
+                strain = item;
+
+                break;
+
+            }
+
         }
 
-        if (!account.inventory || !account.inventory[item] || account.inventory[item] <= 0) {
+        if (!strain) {
+
             return interaction.reply({
-                content: `❌ You don't own any **${item}**.`,
+
+                content: "❌ That strain doesn't exist.",
+
                 ephemeral: true
+
             });
+
         }
 
-        account.inventory[item]--;
+        if (
 
-        updateNeed(userId, "stress", -20);
+            !hasItem(
 
-        addHighness(userId, 25);
+                guildId,
 
-        addIntoxication(userId, 15);
+                userId,
 
-        saveAccount(userId, account);
+                itemId
+
+            )
+
+        ) {
+
+            return interaction.reply({
+
+                content: `❌ You don't own any **${strain.name}**.`,
+
+                ephemeral: true
+
+            });
+
+        }
+
+        removeItem(
+
+            guildId,
+
+            userId,
+
+            itemId,
+
+            1
+
+        );
+
+        account.highness = Math.min(
+
+            100,
+
+            (account.highness || 0) + (Math.floor(Math.random() * 15) + 10)
+
+        );
+                applyEffect(userId, {
+
+            name: "creative",
+
+            intensity: account.highness,
+
+            duration: 30 * 60 * 1000,
+
+            source: itemId
+
+        });
+
+        combineEffects(userId);
+
+        let effectMessage = "";
+
+        const funnyMessages = [
+
+            "😌 You suddenly understand the meaning of life... maybe.",
+
+            "😂 Everything is hilarious right now.",
+
+            "🤔 You started debating with yourself... and you're losing.",
+
+            "🛋️ That couch looks extremely comfortable.",
+
+            "🍕 You're convinced food has never smelled this good.",
+
+            "🎨 You're feeling incredibly creative.",
+
+            "🚀 Your mind is travelling through another dimension."
+
+        ];
+
+        if (account.highness <= 15) {
+
+            effectMessage = funnyMessages[0];
+
+        } else if (account.highness <= 30) {
+
+            effectMessage = funnyMessages[1];
+
+        } else if (account.highness <= 45) {
+
+            effectMessage = funnyMessages[2];
+
+        } else if (account.highness <= 60) {
+
+            effectMessage = funnyMessages[3];
+
+        } else if (account.highness <= 80) {
+
+            effectMessage = funnyMessages[4];
+
+        } else if (account.highness <= 95) {
+
+            effectMessage = funnyMessages[5];
+
+        } else {
+
+            effectMessage = funnyMessages[6];
+
+        }
+
+        account.updatedAt = Date.now();
+
+        saveAccount(account);
 
         const embed = new EmbedBuilder()
-            .setColor(0x9B59B6)
-            .setTitle("🌿 Item Consumed")
+
+            .setColor(0x27AE60)
+
+            .setTitle("🌿 Smoke Session")
+
             .setDescription(
-                `${interaction.user} consumed **${item}**.\n\n` +
-                "😌 Stress reduced.\n" +
-                "🌿 Highness increased.\n" +
-                "🍺 Intoxication increased."
+
+                `${interaction.user} smoked **${strain.name}**.\n\n${effectMessage}`
+
             )
+
+            .addFields(
+
+                {
+
+                    name: "🌿 Highness",
+
+                    value: `${account.highness}%`,
+
+                    inline: true
+
+                },
+
+                {
+
+                    name: "🧠 Effect",
+
+                    value: "Creative",
+
+                    inline: true
+
+                }
+
+            )
+
+            .setFooter({
+
+                text: "TNN Recreational Unit"
+
+            })
+
             .setTimestamp();
 
-        await interaction.reply({
+        return interaction.reply({
+
             embeds: [embed]
+
         });
 
     }
+
 };
