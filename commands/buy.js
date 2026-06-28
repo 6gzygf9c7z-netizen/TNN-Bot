@@ -29,7 +29,7 @@ module.exports = {
 
                 .setName("item")
 
-                .setDescription("Name of the item you want to buy.")
+                .setDescription("Item to purchase")
 
                 .setRequired(true)
 
@@ -63,6 +63,7 @@ module.exports = {
                     selectedItem = item;
                     selectedItemId = itemId;
                     selectedCategory = categoryName;
+
                     break;
 
                 }
@@ -77,7 +78,7 @@ module.exports = {
 
             return interaction.reply({
 
-                content: "❌ That item does not exist on today's cafeteria menu.",
+                content: "❌ Item not found on the cafeteria menu.",
 
                 ephemeral: true
 
@@ -100,20 +101,11 @@ module.exports = {
             interaction.user.id
 
         );
+                account.debt += selectedItem.price;
 
-        if (account.wallet < selectedItem.price) {
+        account.statistics.moneySpent += selectedItem.price;
 
-            return interaction.reply({
-
-                content:
-                    `❌ You need **₦${selectedItem.price.toLocaleString()}** but only have **₦${account.wallet.toLocaleString()}**.`,
-
-                ephemeral: true
-
-            });
-
-        }
-                account.wallet -= selectedItem.price;
+        account.updatedAt = Date.now();
 
         saveAccount(account);
 
@@ -147,11 +139,11 @@ module.exports = {
 
             .setColor(0x2ECC71)
 
-            .setTitle("🛒 Purchase Successful")
+            .setTitle("🛒 Cafeteria Purchase")
 
             .setDescription(
 
-                `${icons[selectedCategory] || "📦"} You purchased **${selectedItem.name}**`
+                `${icons[selectedCategory] || "📦"} **${selectedItem.name}** has been added to your inventory.`
 
             )
 
@@ -159,7 +151,17 @@ module.exports = {
 
                 {
 
-                    name: "Price",
+                    name: "Payment Method",
+
+                    value: "🏢 Company Credit",
+
+                    inline: true
+
+                },
+
+                {
+
+                    name: "Purchase Cost",
 
                     value: `₦${selectedItem.price.toLocaleString()}`,
 
@@ -169,9 +171,9 @@ module.exports = {
 
                 {
 
-                    name: "Remaining Wallet",
+                    name: "Outstanding Debt",
 
-                    value: `₦${account.wallet.toLocaleString()}`,
+                    value: `₦${account.debt.toLocaleString()}`,
 
                     inline: true
 
@@ -179,9 +181,9 @@ module.exports = {
 
                 {
 
-                    name: "Inventory",
+                    name: "Inventory Updated",
 
-                    value: `1 × ${selectedItem.name} added.`,
+                    value: `✅ 1 × ${selectedItem.name}`,
 
                     inline: false
 
@@ -191,7 +193,7 @@ module.exports = {
 
             .setFooter({
 
-                text: "TNN Cafeteria"
+                text: "Bills can be settled later using /clearbills"
 
             })
 
