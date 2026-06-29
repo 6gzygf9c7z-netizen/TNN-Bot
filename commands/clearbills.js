@@ -4,58 +4,96 @@ const {
 } = require("discord.js");
 
 const {
-    getAccount,
-    clearDebt,
-    removeMoney
+    getOrCreateAccount,
+    saveAccount
 } = require("../core/accountsEngine");
 
+const {
+    getOrganization
+} = require("../core/organizationEngine");
+
 module.exports = {
+
     data: new SlashCommandBuilder()
+
         .setName("clearbills")
-        .setDescription("Pay all your outstanding bills."),
+
+        .setDescription("Clear an employee's cafeteria debt.")
+
+        .addUserOption(option =>
+            option
+                .setName("employee")
+                .setDescription("Employee whose bills should be cleared.")
+                .setRequired(true)
+        ),
 
     async execute(interaction) {
 
-        const account = getAccount(interaction.user.id);
+        const guildId = interaction.guild.id;
 
-        if (!account) {
+        const target = interaction.options.getUser("employee");
+
+        const member = interaction.member;
+
+        const organization = getOrganization(guildId);
+
+        if (!organization) {
+
             return interaction.reply({
-                content: "❌ You don't have an account yet.",
+                content: "❌ No organization has been initialized yet.",
                 ephemeral: true
             });
+
         }
 
-        if (account.debt <= 0) {
+        if (
+            !organization.executiveRole ||
+            !member.roles.cache.has(organization.executiveRole)
+        ) {
+
             return interaction.reply({
-                content: "✅ You have no outstanding bills.",
+                content: "❌ Only Executives can clear employee bills.",
                 ephemeral: true
             });
+
         }
 
-        if (account.wallet < account.debt) {
-            return interaction.reply({
-                content: `❌ You need ₦${account.debt.toLocaleString()} to clear your bills.`,
-                ephemeral: true
-            });
-        }
+        const account = getOrCreateAccount(
+            target.id,
+            guildId
+        );
+                account.outstandingBills = 0;
+        account.lastBillCleared = Date.now();
 
-        const amountPaid = account.debt;
-
-        removeMoney(interaction.user.id, amountPaid);
-
-        clearDebt(interaction.user.id);
+        saveAccount(account);
 
         const embed = new EmbedBuilder()
             .setColor(0x2ECC71)
-            .setTitle("🧾 Bills Cleared")
+            .setTitle("✅ Bills Cleared")
             .setDescription(
-                `You successfully paid **₦${amountPaid.toLocaleString()}** in outstanding bills.`
+                `**${target.username}**'s cafeteria bills have been cleared.`
             )
+            .addFields(
+                {
+                    name: "Approved By",
+                    value: `${interaction.user}`,
+                    inline: true
+                },
+                {
+                    name: "Outstanding Debt",
+                    value: "₦0",
+                    inline: true
+                }
+            )
+            .setFooter({
+                text: `${organization.name} Cafeteria`
+            })
             .setTimestamp();
 
-        await interaction.reply({
+        return interaction.reply({
             embeds: [embed]
         });
 
     }
+
 };

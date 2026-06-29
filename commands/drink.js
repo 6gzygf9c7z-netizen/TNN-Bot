@@ -1,149 +1,154 @@
-const {
-    SlashCommandBuilder,
-    EmbedBuilder
-} = require("discord.js");
-
-const menu = require("../data/menu.json");
-
-const {
-    getOrCreateAccount,
-    saveAccount
-} = require("../core/accountsEngine");
-
-const {
-    hasItem,
-    removeItem
-} = require("../core/inventoryEngine");
-
-const {
-    applyEffect,
-    combineEffects
-} = require("../core/effectsEngine");
-
-module.exports = {
-
-    data: new SlashCommandBuilder()
-
-        .setName("drink")
-
-        .setDescription("Drink an item from your inventory.")
-
-        .addStringOption(option =>
-
-            option
-
-                .setName("item")
-
-                .setDescription("Drink to consume")
-
-                .setRequired(true)
-
-        ),
-
-    async execute(interaction) {
-
-        const guildId = interaction.guild.id;
-
-        const userId = interaction.user.id;
-
-        const input = interaction.options
-            .getString("item")
-            .trim()
-            .toLowerCase();
-
-        const account = getOrCreateAccount(
-            userId,
-            guildId
+        const organization = getOrganization(
+            interaction.guild.id
         );
 
-        let itemId = null;
+        if (!organization) {
 
-        let drink = null;
+            return interaction.reply({
 
-        let isAlcohol = false;
+                content: "❌ No organization has been initialized.",
 
-        for (const [id, item] of Object.entries(menu.drinks)) {
+                ephemeral: true
 
-            if (
+            });
 
-                item.name.toLowerCase() === input ||
+        }
 
-                id === input
+        const type = interaction.options.getString("type");
 
-            ) {
+        const position = interaction.options.getString("position");
 
-                itemId = id;
+        const role = interaction.options.getRole("discord_role");
 
-                drink = item;
+        if (!organization.roleMappings) {
+
+            organization.roleMappings = {};
+
+        }
+
+        if (!organization.effectRoles) {
+
+            organization.effectRoles = {};
+
+        }
+
+        if (type === "company") {
+
+            organization.roleMappings[position] = role.id;
+
+        } else {
+
+            organization.effectRoles[position] = role.id;
+
+        }
+
+        switch (position) {
+
+            case "executive":
+
+                organization.executiveRole = role.id;
 
                 break;
 
-            }
+            case "reporter":
+
+                organization.reporterRole = role.id;
+
+                break;
+
+            case "broadcaster":
+
+                organization.broadcasterRole = role.id;
+
+                break;
+
+            case "editor":
+
+                organization.editorRole = role.id;
+
+                break;
+
+            case "finance":
+
+                organization.financeRole = role.id;
+
+                break;
+
+            case "hr":
+
+                organization.hrRole = role.id;
+
+                break;
+
+            case "drunk":
+
+                organization.drunkRole = role.id;
+
+                break;
+
+            case "high":
+
+                organization.highRole = role.id;
+
+                break;
 
         }
 
-        if (!drink) {
+        saveOrganization(organization);
 
-            for (const [id, item] of Object.entries(menu.alcohol)) {
+        const embed = new EmbedBuilder()
 
-                if (
+            .setColor(0x2ECC71)
 
-                    item.name.toLowerCase() === input ||
+            .setTitle("✅ Role Configuration Updated")
 
-                    id === input
+            .setDescription(
 
-                ) {
-
-                    itemId = id;
-
-                    drink = item;
-
-                    isAlcohol = true;
-
-                    break;
-
-                }
-
-            }
-
-        }
-
-        if (!drink) {
-
-            return interaction.reply({
-
-                content: "❌ That drink doesn't exist.",
-
-                ephemeral: true
-
-            });
-
-        }
-
-        if (
-
-            !hasItem(
-
-                guildId,
-
-                userId,
-
-                itemId
+                `${role} is now linked to **${position.charAt(0).toUpperCase() + position.slice(1)}** (${type}).`
 
             )
 
-        ) {
+            .addFields(
 
-            return interaction.reply({
+                {
 
-                content: `❌ You don't own any **${drink.name}**.`,
+                    name: "Organization",
 
-                ephemeral: true
+                    value: organization.name,
 
-            });
+                    inline: true
 
-        }
+                },
 
+                {
+
+                    name: "Configuration Type",
+
+                    value: type,
+
+                    inline: true
+
+                }
+
+            )
+
+            .setFooter({
+
+                text: `${organization.name} Administration`
+
+            })
+
+            .setTimestamp();
+
+        return interaction.reply({
+
+            embeds: [embed]
+
+        });
+
+    }
+
+};
         removeItem(
 
             guildId,
@@ -163,17 +168,25 @@ module.exports = {
             (account.hydration || 100) + 20
 
         );
-                let emoji = "🥤";
 
-        let effectMessage = "";
+        let effectMessage = "💧 Refreshing drink...";
+
+        let emoji = "🥤";
 
         if (isAlcohol) {
 
-            const gain = Math.floor(Math.random() * 15) + 10;
+            const intoxicationGain = Math.floor(
+
+                Math.random() * 15
+
+            ) + 10;
 
             account.intoxication = Math.min(
+
                 100,
-                (account.intoxication || 0) + gain
+
+                (account.intoxication || 0) + intoxicationGain
+
             );
 
             applyEffect(userId, {
@@ -192,65 +205,45 @@ module.exports = {
 
             emoji = "🍺";
 
-            const funnyMessages = [
+            if (account.intoxication <= 20) {
 
-                "🙂 You feel slightly tipsy...",
+                effectMessage = "🙂 You feel slightly tipsy...";
 
-                "😅 You're talking a little louder than usual...",
+            } else if (account.intoxication <= 40) {
 
-                "🥴 You suddenly think you're the smartest person in the room...",
+                effectMessage = "🥴 You're beginning to slur your words...";
 
-                "🤣 You greeted the refrigerator by mistake...",
+            } else if (account.intoxication <= 70) {
 
-                "🤪 You're dancing to music nobody else can hear...",
-
-                "🤢 Walking in a straight line is becoming difficult...",
-
-                "☠️ You're completely wasted..."
-
-            ];
-
-            if (account.intoxication <= 15) {
-
-                effectMessage = funnyMessages[0];
-
-            } else if (account.intoxication <= 30) {
-
-                effectMessage = funnyMessages[1];
-
-            } else if (account.intoxication <= 45) {
-
-                effectMessage = funnyMessages[2];
-
-            } else if (account.intoxication <= 60) {
-
-                effectMessage = funnyMessages[3];
-
-            } else if (account.intoxication <= 80) {
-
-                effectMessage = funnyMessages[4];
-
-            } else if (account.intoxication <= 95) {
-
-                effectMessage = funnyMessages[5];
+                effectMessage = "🍻 You're obviously drunk now... everyone can tell.";
 
             } else {
 
-                effectMessage = funnyMessages[6];
+                effectMessage = "☠️ You're completely wasted... someone should probably take your keys.";
 
             }
 
-        } else {
+            if (
 
-            account.intoxication = Math.max(
+                organization?.drunkRole &&
 
-                0,
+                interaction.guild.members.me.roles.highest.position >
 
-                (account.intoxication || 0) - 5
+                interaction.guild.roles.cache.get(
 
-            );
+                    organization.drunkRole
 
-            effectMessage = "💧 Refreshing... you're feeling hydrated.";
+                )?.position
+
+            ) {
+
+                await interaction.member.roles.add(
+
+                    organization.drunkRole
+
+                ).catch(() => {});
+
+            }
 
         }
 
@@ -262,7 +255,11 @@ module.exports = {
 
             .setColor(
 
-                isAlcohol ? 0xE67E22 : 0x3498DB
+                isAlcohol
+
+                    ? 0xE67E22
+
+                    : 0x3498DB
 
             )
 
@@ -300,7 +297,7 @@ module.exports = {
 
             .setFooter({
 
-                text: "TNN Cafeteria"
+                text: `${organization?.name || "Organization"} Cafeteria`
 
             })
 

@@ -1,0 +1,232 @@
+{
+  "foods": {
+    "burger": {
+      "stock": 50,
+      "available": true,
+      "price": 2500,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "pizza": {
+      "stock": 30,
+      "available": true,
+      "price": 7000,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "shawarma": {
+      "stock": 40,
+      "available": true,
+      "price": 3500,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "fried_rice": {
+      "stock": 40,
+      "available": true,
+      "price": 4000,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "jollof_rice": {
+      "stock": 50,
+      "available": true,
+      "price": 3500,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "beans": {
+      "stock": 60,
+      "available": true,
+      "price": 2500,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "yam_egg": {
+      "stock": 40,
+      "available": true,
+      "price": 3500,
+      "restockedBy": null,
+      "lastRestocked": null
+    }
+  },
+
+  "drinks": {
+    "water": {
+      "stock": 100,
+      "available": true,
+      "price": 300,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "coca_cola": {
+      "stock": 80,
+      "available": true,
+      "price": 800,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "fanta": {
+      "stock": 80,
+      "available": true,
+      "price": 800,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "sprite": {
+      "stock": 80,
+      "available": true,
+      "price": 800,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "coffee": {
+      "stock": 50,
+      "available": true,
+      "price": 1800,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "tea": {
+      "stock": 50,
+      "available": true,
+      "price": 1500,
+      "restockedBy": null,
+      "lastRestocked": null
+    }
+  },
+    "alcohol": {
+    "heineken": {
+      "stock": 40,
+      "available": true,
+      "price": 3500,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "guinness": {
+      "stock": 40,
+      "available": true,
+      "price": 3800,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "budweiser": {
+      "stock": 40,
+      "available": true,
+      "price": 4200,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "smirnoff": {
+      "stock": 25,
+      "available": true,
+      "price": 12000,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "jack_daniels": {
+      "stock": 20,
+      "available": true,
+      "price": 35000,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "jameson": {
+      "stock": 20,
+      "available": true,
+      "price": 38000,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "hennessy_vsop": {
+      "stock": 15,
+      "available": true,
+      "price": 70000,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "martell_blue_swift": {
+      "stock": 15,
+      "available": true,
+      "price": 85000,
+      "restockedBy": null,
+      "lastRestocked": null
+    }
+  },
+
+  "cannabis": {
+    "og_kush": {
+      "stock": 30,
+      "available": true,
+      "price": 12000,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "purple_haze": {
+      "stock": 30,
+      "available": true,
+      "price": 15000,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "blue_dream": {
+      "stock": 25,
+      "available": true,
+      "price": 18000,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "white_widow": {
+      "stock": 25,
+      "available": true,
+      "price": 20000,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "girl_scout_cookies": {
+      "stock": 20,
+      "available": true,
+      "price": 25000,
+      "restockedBy": null,
+      "lastRestocked": null
+    }
+  },
+
+  "cigarettes": {
+    "marlboro": {
+      "stock": 80,
+      "available": true,
+      "price": 2500,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "dunhill": {
+      "stock": 80,
+      "available": true,
+      "price": 3000,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "benson": {
+      "stock": 80,
+      "available": true,
+      "price": 2200,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "camel": {
+      "stock": 80,
+      "available": true,
+      "price": 2800,
+      "restockedBy": null,
+      "lastRestocked": null
+    },
+    "rothmans": {
+      "stock": 80,
+      "available": true,
+      "price": 2400,
+      "restockedBy": null,
+      "lastRestocked": null
+    }
+  }
+}

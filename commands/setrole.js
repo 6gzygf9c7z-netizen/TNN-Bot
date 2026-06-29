@@ -5,8 +5,10 @@ const {
 } = require("discord.js");
 
 const {
+
     getOrganization,
-    setPermissionRole
+    saveOrganization
+
 } = require("../core/organizationEngine");
 
 module.exports = {
@@ -15,43 +17,120 @@ module.exports = {
 
         .setName("setrole")
 
-        .setDescription("Assign a management role to your organization.")
+        .setDescription("Configure company and effect roles.")
+
+        .setDefaultMemberPermissions(
+
+            PermissionFlagsBits.Administrator
+
+        )
 
         .addStringOption(option =>
 
             option
 
-                .setName("permission")
+                .setName("type")
 
-                .setDescription("Permission to configure")
+                .setDescription("Type of role to configure")
 
                 .setRequired(true)
 
                 .addChoices(
 
                     {
+
+                        name: "🏢 Company Role",
+
+                        value: "company"
+
+                    },
+
+                    {
+
+                        name: "🍺 Effect Role",
+
+                        value: "effect"
+
+                    }
+
+                )
+
+        )
+
+        .addStringOption(option =>
+
+            option
+
+                .setName("position")
+
+                .setDescription("Company position or effect")
+
+                .setRequired(true)
+
+                .addChoices(
+
+                    {
+
                         name: "Executive",
-                        value: "executiveRole"
+
+                        value: "executive"
+
                     },
 
                     {
+
+                        name: "Reporter",
+
+                        value: "reporter"
+
+                    },
+
+                    {
+
+                        name: "Broadcaster",
+
+                        value: "broadcaster"
+
+                    },
+
+                    {
+
+                        name: "Editor",
+
+                        value: "editor"
+
+                    },
+
+                    {
+
                         name: "Finance",
-                        value: "financeRole"
+
+                        value: "finance"
+
                     },
 
                     {
-                        name: "Cafeteria",
-                        value: "cafeteriaRole"
+
+                        name: "Human Resources",
+
+                        value: "hr"
+
                     },
 
                     {
-                        name: "Hospital",
-                        value: "hospitalRole"
+
+                        name: "🍺 Drunk",
+
+                        value: "drunk"
+
                     },
 
                     {
-                        name: "Security",
-                        value: "securityRole"
+
+                        name: "🌿 High",
+
+                        value: "high"
+
                     }
 
                 )
@@ -62,28 +141,24 @@ module.exports = {
 
             option
 
-                .setName("role")
+                .setName("discord_role")
 
-                .setDescription("Select the Discord role")
+                .setDescription("Discord role to link")
 
                 .setRequired(true)
 
-        )
-
-        .setDefaultMemberPermissions(
-            PermissionFlagsBits.Administrator
         ),
 
     async execute(interaction) {
-
-        const organization = getOrganization(interaction.guild.id);
+                const organization = getOrganization(
+            interaction.guild.id
+        );
 
         if (!organization) {
 
             return interaction.reply({
 
-                content:
-                    "❌ Create an organization first using **/createorganization**.",
+                content: "❌ No organization has been initialized.",
 
                 ephemeral: true
 
@@ -91,50 +166,133 @@ module.exports = {
 
         }
 
-        if (!organization.initialized) {
+        const type = interaction.options.getString("type");
 
-            return interaction.reply({
+        const position = interaction.options.getString("position");
 
-                content:
-                    "❌ Initialize your organization first using **/initialize**.",
+        const role = interaction.options.getRole("discord_role");
 
-                ephemeral: true
+        if (!organization.roleMappings) {
 
-            });
+            organization.roleMappings = {};
 
         }
 
-        const permission =
-            interaction.options.getString("permission");
+        if (!organization.effectRoles) {
 
-        const role =
-            interaction.options.getRole("role");
+            organization.effectRoles = {};
 
-        setPermissionRole(
+        }
 
-            interaction.guild.id,
+        if (type === "company") {
 
-            permission,
+            organization.roleMappings[position] = role.id;
 
-            role.id
+        } else {
 
-        );
+            organization.effectRoles[position] = role.id;
+
+        }
+
+        switch (position) {
+
+            case "executive":
+
+                organization.executiveRole = role.id;
+
+                break;
+
+            case "reporter":
+
+                organization.reporterRole = role.id;
+
+                break;
+
+            case "broadcaster":
+
+                organization.broadcasterRole = role.id;
+
+                break;
+
+            case "editor":
+
+                organization.editorRole = role.id;
+
+                break;
+
+            case "finance":
+
+                organization.financeRole = role.id;
+
+                break;
+
+            case "hr":
+
+                organization.hrRole = role.id;
+
+                break;
+
+            case "drunk":
+
+                organization.drunkRole = role.id;
+
+                break;
+
+            case "high":
+
+                organization.highRole = role.id;
+
+                break;
+
+        }
+
+        saveOrganization(organization);
 
         const embed = new EmbedBuilder()
 
-            .setColor(0x5865F2)
+            .setColor(0x2ECC71)
 
-            .setTitle("✅ Role Assigned")
+            .setTitle("✅ Role Configuration Updated")
 
             .setDescription(
 
-                `**${role.name}** has been assigned as **${permission}**.`
+                `${role} is now linked to **${position.charAt(0).toUpperCase() + position.slice(1)}** (${type}).`
 
             )
 
+            .addFields(
+
+                {
+
+                    name: "Organization",
+
+                    value: organization.name,
+
+                    inline: true
+
+                },
+
+                {
+
+                    name: "Configuration Type",
+
+                    value: type,
+
+                    inline: true
+
+                }
+
+            )
+
+            .setFooter({
+
+                text: `${organization.name} Administration`
+
+            })
+
             .setTimestamp();
 
-        await interaction.reply({
+        return interaction.reply({
 
             embeds: [embed]
 
@@ -142,4 +300,4 @@ module.exports = {
 
     }
 
-};
+}

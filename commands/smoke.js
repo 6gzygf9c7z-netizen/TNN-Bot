@@ -20,13 +20,17 @@ const {
     combineEffects
 } = require("../core/effectsEngine");
 
+const {
+    getOrganization
+} = require("../core/organizationEngine");
+
 module.exports = {
 
     data: new SlashCommandBuilder()
 
         .setName("smoke")
 
-        .setDescription("Smoke cannabis from your inventory.")
+        .setDescription("Smoke cannabis or cigarettes from your inventory.")
 
         .addStringOption(option =>
 
@@ -34,7 +38,7 @@ module.exports = {
 
                 .setName("item")
 
-                .setDescription("Cannabis strain to smoke")
+                .setDescription("What you want to smoke")
 
                 .setRequired(true)
 
@@ -46,45 +50,51 @@ module.exports = {
 
         const userId = interaction.user.id;
 
-        const input = interaction.options
+        const organization = getOrganization(guildId);
+
+        const itemId = interaction.options
+
             .getString("item")
+
             .trim()
+
             .toLowerCase();
 
         const account = getOrCreateAccount(
+
             userId,
+
             guildId
+
         );
 
-        let itemId = null;
+        let smoke = null;
 
-        let strain = null;
+        let isCannabis = false;
 
-        for (const [id, item] of Object.entries(menu.smoke)) {
+        let isCigarette = false;
 
-            if (
+        if (menu.cannabis && menu.cannabis[itemId]) {
 
-                item.name.toLowerCase() === input ||
+            smoke = menu.cannabis[itemId];
 
-                id === input
-
-            ) {
-
-                itemId = id;
-
-                strain = item;
-
-                break;
-
-            }
+            isCannabis = true;
 
         }
 
-        if (!strain) {
+        if (menu.cigarettes && menu.cigarettes[itemId]) {
+
+            smoke = menu.cigarettes[itemId];
+
+            isCigarette = true;
+
+        }
+
+        if (!smoke) {
 
             return interaction.reply({
 
-                content: "❌ That strain doesn't exist.",
+                content: "❌ That item doesn't exist.",
 
                 ephemeral: true
 
@@ -108,15 +118,14 @@ module.exports = {
 
             return interaction.reply({
 
-                content: `❌ You don't own any **${strain.name}**.`,
+                content: `❌ You don't own any **${smoke.name}**.`,
 
                 ephemeral: true
 
             });
 
         }
-
-        removeItem(
+                removeItem(
 
             guildId,
 
@@ -128,74 +137,119 @@ module.exports = {
 
         );
 
-        account.highness = Math.min(
-
-            100,
-
-            (account.highness || 0) + (Math.floor(Math.random() * 15) + 10)
-
-        );
-                applyEffect(userId, {
-
-            name: "creative",
-
-            intensity: account.highness,
-
-            duration: 30 * 60 * 1000,
-
-            source: itemId
-
-        });
-
-        combineEffects(userId);
-
         let effectMessage = "";
 
-        const funnyMessages = [
+        let emoji = "🚬";
 
-            "😌 You suddenly understand the meaning of life... maybe.",
+        if (isCannabis) {
 
-            "😂 Everything is hilarious right now.",
+            const highGain = Math.floor(
 
-            "🤔 You started debating with yourself... and you're losing.",
+                Math.random() * 15
 
-            "🛋️ That couch looks extremely comfortable.",
+            ) + 10;
 
-            "🍕 You're convinced food has never smelled this good.",
+            account.highness = Math.min(
 
-            "🎨 You're feeling incredibly creative.",
+                100,
 
-            "🚀 Your mind is travelling through another dimension."
+                (account.highness || 0) + highGain
 
-        ];
+            );
 
-        if (account.highness <= 15) {
+            applyEffect(userId, {
 
-            effectMessage = funnyMessages[0];
+                name: "high",
 
-        } else if (account.highness <= 30) {
+                intensity: account.highness,
 
-            effectMessage = funnyMessages[1];
+                duration: 30 * 60 * 1000,
 
-        } else if (account.highness <= 45) {
+                source: itemId
 
-            effectMessage = funnyMessages[2];
+            });
 
-        } else if (account.highness <= 60) {
+            combineEffects(userId);
 
-            effectMessage = funnyMessages[3];
+            emoji = "🌿";
 
-        } else if (account.highness <= 80) {
+            if (account.highness <= 20) {
 
-            effectMessage = funnyMessages[4];
+                effectMessage = "😌 You feel relaxed... everything seems calmer.";
 
-        } else if (account.highness <= 95) {
+            } else if (account.highness <= 40) {
 
-            effectMessage = funnyMessages[5];
+                effectMessage = "😂 You're smiling at absolutely nothing.";
 
-        } else {
+            } else if (account.highness <= 70) {
 
-            effectMessage = funnyMessages[6];
+                effectMessage = "🍕 You're convinced food has never tasted this good.";
+
+            } else {
+
+                effectMessage = "🚀 You've left planet Earth... enjoy the trip.";
+
+            }
+
+            if (
+
+                organization?.highRole &&
+
+                interaction.guild.members.me.roles.highest.position >
+
+                interaction.guild.roles.cache.get(
+
+                    organization.highRole
+
+                )?.position
+
+            ) {
+
+                await interaction.member.roles.add(
+
+                    organization.highRole
+
+                ).catch(() => {});
+
+            }
+
+        }
+
+        if (isCigarette) {
+
+            const nicotineGain = Math.floor(
+
+                Math.random() * 10
+
+            ) + 5;
+
+            account.nicotine = Math.min(
+
+                100,
+
+                (account.nicotine || 0) + nicotineGain
+
+            );
+
+            emoji = "🚬";
+
+            if (account.nicotine <= 20) {
+
+                effectMessage = "😮‍💨 A light puff... nothing too serious.";
+
+            } else if (account.nicotine <= 40) {
+
+                effectMessage = "🚬 You needed that smoke break.";
+
+            } else if (account.nicotine <= 70) {
+
+                effectMessage = "😵 You're becoming heavily dependent on nicotine.";
+
+            } else {
+
+                effectMessage = "☠️ Chain smoking isn't doing your lungs any favours.";
+
+            }
 
         }
 
@@ -205,13 +259,21 @@ module.exports = {
 
         const embed = new EmbedBuilder()
 
-            .setColor(0x27AE60)
+            .setColor(
 
-            .setTitle("🌿 Smoke Session")
+                isCannabis
+
+                    ? 0x2ECC71
+
+                    : 0x95A5A6
+
+            )
+
+            .setTitle(`${emoji} Smoke Session`)
 
             .setDescription(
 
-                `${interaction.user} smoked **${strain.name}**.\n\n${effectMessage}`
+                `${interaction.user} smoked **${smoke.name}**.\n\n${effectMessage}`
 
             )
 
@@ -221,7 +283,7 @@ module.exports = {
 
                     name: "🌿 Highness",
 
-                    value: `${account.highness}%`,
+                    value: `${account.highness || 0}%`,
 
                     inline: true
 
@@ -229,9 +291,9 @@ module.exports = {
 
                 {
 
-                    name: "🧠 Effect",
+                    name: "🚬 Nicotine",
 
-                    value: "Creative",
+                    value: `${account.nicotine || 0}%`,
 
                     inline: true
 
@@ -241,7 +303,7 @@ module.exports = {
 
             .setFooter({
 
-                text: "TNN Recreational Unit"
+                text: `${organization?.name || "Organization"} Cafeteria`
 
             })
 

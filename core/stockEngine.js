@@ -1,20 +1,30 @@
 const fs = require("fs");
+const path = require("path");
 
-const FILE = "./data/stock.json";
+const STOCK_FILE = path.join(
+    __dirname,
+    "../data/cafeteriaStock.json"
+);
 
 function loadStock() {
 
-    if (!fs.existsSync(FILE)) {
+    if (!fs.existsSync(STOCK_FILE)) {
 
-        fs.writeFileSync(
-            FILE,
-            JSON.stringify({}, null, 2)
-        );
+        return {
+            foods: {},
+            drinks: {},
+            alcohol: {},
+            cannabis: {},
+            cigarettes: {}
+        };
 
     }
 
     return JSON.parse(
-        fs.readFileSync(FILE, "utf8")
+        fs.readFileSync(
+            STOCK_FILE,
+            "utf8"
+        )
     );
 
 }
@@ -22,81 +32,145 @@ function loadStock() {
 function saveStock(stock) {
 
     fs.writeFileSync(
-        FILE,
-        JSON.stringify(stock, null, 2)
+        STOCK_FILE,
+        JSON.stringify(
+            stock,
+            null,
+            4
+        )
     );
 
 }
-function createItemStock(guildId, itemId, options = {}) {
+function getItem(category, itemId) {
 
     const stock = loadStock();
 
-    if (!stock[guildId]) {
-
-        stock[guildId] = {};
-
-    }
-
-    if (!stock[guildId][itemId]) {
-
-        stock[guildId][itemId] = {
-
-            currentStock: options.maximumStock || 100,
-
-            maximumStock: options.maximumStock || 100,
-
-            restockAmount: options.restockAmount || 25,
-
-            restockInterval: options.restockInterval || 21600000,
-
-            lastRestocked: Date.now()
-
-        };
-
-    }
-
-    saveStock(stock);
-
-    return stock[guildId][itemId];
-
-}
-
-function getItemStock(guildId, itemId) {
-
-    const stock = loadStock();
-
-    if (
-        !stock[guildId] ||
-        !stock[guildId][itemId]
-    ) {
+    if (!stock[category]) {
 
         return null;
 
     }
 
-    return stock[guildId][itemId];
+    return stock[category][itemId] || null;
 
 }
-function removeStock(guildId, itemId, quantity = 1) {
+
+function getPrice(category, itemId) {
+
+    const item = getItem(
+        category,
+        itemId
+    );
+
+    if (!item) {
+
+        return null;
+
+    }
+
+    return item.price;
+
+}
+
+function isAvailable(category, itemId) {
+
+    const item = getItem(
+        category,
+        itemId
+    );
+
+    if (!item) {
+
+        return false;
+
+    }
+
+    return (
+        item.available === true &&
+        item.stock > 0
+    );
+
+}
+
+function getStock(category, itemId) {
+
+    const item = getItem(
+        category,
+        itemId
+    );
+
+    if (!item) {
+
+        return 0;
+
+    }
+
+    return item.stock;
+
+}
+function addStock(category, itemId, quantity, restockedBy = null) {
 
     const stock = loadStock();
 
-    if (
-        !stock[guildId] ||
-        !stock[guildId][itemId]
-    ) {
+    if (!stock[category]) {
+
+        stock[category] = {};
+
+    }
+
+    if (!stock[category][itemId]) {
+
+        stock[category][itemId] = {
+
+            stock: 0,
+
+            available: true,
+
+            price: 0,
+
+            restockedBy: null,
+
+            lastRestocked: null
+
+        };
+
+    }
+
+    stock[category][itemId].stock += quantity;
+
+    stock[category][itemId].available = stock[category][itemId].stock > 0;
+
+    stock[category][itemId].restockedBy = restockedBy;
+
+    stock[category][itemId].lastRestocked = Date.now();
+
+    saveStock(stock);
+
+    return stock[category][itemId];
+
+}
+
+function removeStock(category, itemId, quantity = 1) {
+
+    const stock = loadStock();
+
+    const item = stock?.[category]?.[itemId];
+
+    if (!item) {
 
         return false;
 
     }
 
-    if (stock[guildId][itemId].currentStock < quantity) {
+    item.stock = Math.max(
 
-        return false;
+        0,
 
-    }
+        item.stock - quantity
 
-    stock[guildId][itemId].currentStock -= quantity;
+    );
+
+    item.available = item.stock > 0;
 
     saveStock(stock);
 
@@ -104,99 +178,66 @@ function removeStock(guildId, itemId, quantity = 1) {
 
 }
 
-function restockItem(guildId, itemId) {
+function setPrice(category, itemId, price) {
 
     const stock = loadStock();
 
-    if (
-        !stock[guildId] ||
-        !stock[guildId][itemId]
-    ) {
+    const item = stock?.[category]?.[itemId];
+
+    if (!item) {
 
         return false;
 
     }
 
-    const item = stock[guildId][itemId];
-
-    item.currentStock = Math.min(
-
-        item.maximumStock,
-
-        item.currentStock + item.restockAmount
-
-    );
-
-    item.lastRestocked = Date.now();
+    item.price = price;
 
     saveStock(stock);
 
-    return item;
-
-}
-function isOutOfStock(guildId, itemId) {
-
-    const item = getItemStock(guildId, itemId);
-
-    if (!item) return true;
-
-    return item.currentStock <= 0;
+    return true;
 
 }
 
-function getRemainingRestockTime(guildId, itemId) {
+function setAvailability(category, itemId, available) {
 
-    const item = getItemStock(guildId, itemId);
+    const stock = loadStock();
 
-    if (!item) return 0;
+    const item = stock?.[category]?.[itemId];
 
-    const nextRestock =
+    if (!item) {
 
-        item.lastRestocked +
+        return false;
 
-        item.restockInterval;
+    }
 
-    return Math.max(
+    item.available = available;
 
-        0,
+    saveStock(stock);
 
-        nextRestock - Date.now()
-
-    );
+    return true;
 
 }
 
-function getStockPercentage(guildId, itemId) {
-
-    const item = getItemStock(guildId, itemId);
-
-    if (!item) return 0;
-
-    return Math.round(
-
-        (item.currentStock / item.maximumStock) * 100
-
-    );
-
-}
 module.exports = {
 
     loadStock,
 
     saveStock,
 
-    createItemStock,
+    getItem,
 
-    getItemStock,
+    getPrice,
+
+    isAvailable,
+
+    getStock,
+
+    addStock,
 
     removeStock,
 
-    restockItem,
+    setPrice,
 
-    isOutOfStock,
-
-    getRemainingRestockTime,
-
-    getStockPercentage
+    setAvailability
 
 };
