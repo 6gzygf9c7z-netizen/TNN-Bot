@@ -1,12 +1,96 @@
-        const organization = getOrganization(
-            interaction.guild.id
+const {
+    SlashCommandBuilder,
+    EmbedBuilder
+} = require("discord.js");
+
+const menu = require("../data/menu.json");
+
+const {
+    getOrCreateAccount,
+    saveAccount
+} = require("../core/accountsEngine");
+
+const {
+    hasItem,
+    removeItem
+} = require("../core/inventoryEngine");
+
+const {
+    applyEffect,
+    combineEffects
+} = require("../core/effectsEngine");
+
+const {
+    getOrganization
+} = require("../core/organizationEngine");
+
+module.exports = {
+
+    data: new SlashCommandBuilder()
+
+        .setName("drink")
+
+        .setDescription("Drink an item from your inventory.")
+
+        .addStringOption(option =>
+
+            option
+
+                .setName("item")
+
+                .setDescription("Drink to consume")
+
+                .setRequired(true)
+
+        ),
+
+    async execute(interaction) {
+
+        const guildId = interaction.guild.id;
+
+        const userId = interaction.user.id;
+
+        const organization = getOrganization(guildId);
+
+        const itemId = interaction.options
+
+            .getString("item")
+
+            .trim()
+
+            .toLowerCase();
+
+        const account = getOrCreateAccount(
+
+            userId,
+
+            guildId
+
         );
 
-        if (!organization) {
+        let drink = null;
+
+        let isAlcohol = false;
+
+        if (menu.drinks && menu.drinks[itemId]) {
+
+            drink = menu.drinks[itemId];
+
+        }
+
+        if (menu.alcohol && menu.alcohol[itemId]) {
+
+            drink = menu.alcohol[itemId];
+
+            isAlcohol = true;
+
+        }
+
+        if (!drink) {
 
             return interaction.reply({
 
-                content: "❌ No organization has been initialized.",
+                content: "❌ That drink doesn't exist.",
 
                 ephemeral: true
 
@@ -14,142 +98,30 @@
 
         }
 
-        const type = interaction.options.getString("type");
+        if (
 
-        const position = interaction.options.getString("position");
+            !hasItem(
 
-        const role = interaction.options.getRole("discord_role");
+                guildId,
 
-        if (!organization.roleMappings) {
+                userId,
 
-            organization.roleMappings = {};
-
-        }
-
-        if (!organization.effectRoles) {
-
-            organization.effectRoles = {};
-
-        }
-
-        if (type === "company") {
-
-            organization.roleMappings[position] = role.id;
-
-        } else {
-
-            organization.effectRoles[position] = role.id;
-
-        }
-
-        switch (position) {
-
-            case "executive":
-
-                organization.executiveRole = role.id;
-
-                break;
-
-            case "reporter":
-
-                organization.reporterRole = role.id;
-
-                break;
-
-            case "broadcaster":
-
-                organization.broadcasterRole = role.id;
-
-                break;
-
-            case "editor":
-
-                organization.editorRole = role.id;
-
-                break;
-
-            case "finance":
-
-                organization.financeRole = role.id;
-
-                break;
-
-            case "hr":
-
-                organization.hrRole = role.id;
-
-                break;
-
-            case "drunk":
-
-                organization.drunkRole = role.id;
-
-                break;
-
-            case "high":
-
-                organization.highRole = role.id;
-
-                break;
-
-        }
-
-        saveOrganization(organization);
-
-        const embed = new EmbedBuilder()
-
-            .setColor(0x2ECC71)
-
-            .setTitle("✅ Role Configuration Updated")
-
-            .setDescription(
-
-                `${role} is now linked to **${position.charAt(0).toUpperCase() + position.slice(1)}** (${type}).`
+                itemId
 
             )
 
-            .addFields(
+        ) {
 
-                {
+            return interaction.reply({
 
-                    name: "Organization",
+                content: `❌ You don't own any **${drink.name}**.`,
 
-                    value: organization.name,
+                ephemeral: true
 
-                    inline: true
+            });
 
-                },
-
-                {
-
-                    name: "Configuration Type",
-
-                    value: type,
-
-                    inline: true
-
-                }
-
-            )
-
-            .setFooter({
-
-                text: `${organization.name} Administration`
-
-            })
-
-            .setTimestamp();
-
-        return interaction.reply({
-
-            embeds: [embed]
-
-        });
-
-    }
-
-};
-        removeItem(
+        }
+                removeItem(
 
             guildId,
 
