@@ -8,32 +8,42 @@ const menu = require("../data/menu.json");
 const {
     getOrCreateAccount,
     saveAccount
-} = require("../core/accountEngine");
+} = require("../core/accountsEngine");
 
 const {
-    getInventory,
+    hasItem,
     removeItem
 } = require("../core/inventoryEngine");
 
 const {
     applyEffect,
     combineEffects
-} = require("../core/effectEngine");
+} = require("../core/effectsEngine");
 
 const {
     getOrganization
 } = require("../core/organizationEngine");
 
 module.exports = {
+
     data: new SlashCommandBuilder()
+
         .setName("smoke")
+
         .setDescription("Smoke cannabis or cigarettes.")
+
         .addStringOption(option =>
+
             option
+
                 .setName("item")
-                .setDescription("Item to smoke")
+
+                .setDescription("Choose what to smoke")
+
                 .setRequired(true)
+
                 .setAutocomplete(true)
+
         ),
 
     async autocomplete(interaction) {
@@ -49,8 +59,11 @@ module.exports = {
             Object.entries(menu.smoke).forEach(([id, item]) => {
 
                 choices.push({
+
                     name: item.name,
+
                     value: id
+
                 });
 
             });
@@ -62,8 +75,11 @@ module.exports = {
             Object.entries(menu.cigarettes).forEach(([id, item]) => {
 
                 choices.push({
+
                     name: item.name,
+
                     value: id
+
                 });
 
             });
@@ -71,9 +87,13 @@ module.exports = {
         }
 
         const filtered = choices
+
             .filter(choice =>
+
                 choice.name.toLowerCase().includes(focused)
+
             )
+
             .slice(0, 25);
 
         return interaction.respond(filtered);
@@ -88,25 +108,25 @@ module.exports = {
 
         const organization = getOrganization(guildId);
 
-        const itemId = interaction.options.getString("item");
+        const itemId = interaction.options
 
-        const inventory = getInventory(guildId, userId);
+            .getString("item")
 
-        if (!inventory[itemId] || inventory[itemId] <= 0) {
+            .trim()
 
-            return interaction.reply({
+            .toLowerCase();
 
-                content: "❌ You don't own this item.",
+        const account = getOrCreateAccount(
 
-                ephemeral: true
+            userId,
 
-            });
+            guildId
 
-        }
+        );
 
         let smoke = null;
 
-        let isCannabis = false;
+        let isSmoke = false;
 
         let isCigarette = false;
 
@@ -114,7 +134,7 @@ module.exports = {
 
             smoke = menu.smoke[itemId];
 
-            isCannabis = true;
+            isSmoke = true;
 
         }
 
@@ -130,7 +150,7 @@ module.exports = {
 
             return interaction.reply({
 
-                content: "❌ That item doesn't exist.",
+                content: "❌ That smoking item doesn't exist.",
 
                 ephemeral: true
 
@@ -138,13 +158,30 @@ module.exports = {
 
         }
 
-        const account = getOrCreateAccount(
+        if (
 
-            guildId,
+            !hasItem(
 
-            userId
+                guildId,
 
-        );
+                userId,
+
+                itemId
+
+            )
+
+        ) {
+
+            return interaction.reply({
+
+                content: `❌ You don't own any **${smoke.name}**.`,
+
+                ephemeral: true
+
+            });
+
+
+        }
                 removeItem(
 
             guildId,
@@ -157,39 +194,89 @@ module.exports = {
 
         );
 
+        let emoji = "🚬";
+
+        let effectMessage = "";
+
         if (isSmoke) {
+
+            const highGain = Math.floor(
+
+                Math.random() * 15
+
+            ) + 10;
 
             account.highness = Math.min(
 
                 100,
 
-                (account.highness || 0) + 25
+                (account.highness || 0) + highGain
 
             );
 
-            account.mood = Math.min(
+            applyEffect(userId, {
 
-                100,
+                name: "high",
 
-                (account.mood || 50) + 5
+                intensity: account.highness,
 
-            );
+                duration: 30 * 60 * 1000,
 
-            account.energy = Math.max(
+                source: itemId
 
-                0,
+            });
 
-                (account.energy || 100) - 3
+            combineEffects(userId);
 
-            );
+            emoji = "🌿";
 
-            applyEffect(
+            if (account.highness <= 20) {
 
-                account,
+                effectMessage = "😌 You feel relaxed...";
 
-                smoke.currentEffect || itemId
+            } else if (account.highness <= 40) {
 
-            );
+                effectMessage = "😂 Everything suddenly seems funnier.";
+
+            } else if (account.highness <= 70) {
+
+                effectMessage = "🍕 The munchies have arrived...";
+
+            } else {
+
+                effectMessage = "🚀 You've completely left planet Earth.";
+
+            }
+
+            if (
+
+                organization?.highRole
+
+            ) {
+
+                const role = interaction.guild.roles.cache.get(
+
+                    organization.highRole
+
+                );
+
+                if (
+
+                    role &&
+
+                    interaction.guild.members.me.roles.highest.position >
+
+                    role.position &&
+
+                    !interaction.member.roles.cache.has(role.id)
+
+                ) {
+
+                    await interaction.member.roles.add(role).catch(() => {});
+
+                }
+
+            }
 
         }
 
@@ -203,37 +290,48 @@ module.exports = {
 
             );
 
-            account.stress = Math.max(
+            emoji = "🚬";
 
-                0,
+            if (account.nicotine <= 20) {
 
-                (account.stress || 0) - 5
+                effectMessage = "😮‍💨 A quick smoke break.";
 
-            );
+            } else if (account.nicotine <= 40) {
+
+                effectMessage = "🚬 You're starting to crave another one.";
+
+            } else if (account.nicotine <= 70) {
+
+                effectMessage = "😵 Nicotine is taking over.";
+
+            } else {
+
+                effectMessage = "☠️ You're chain smoking at this point.";
+
+            }
 
         }
 
-        combineEffects(account);
+        account.updatedAt = Date.now();
 
-        saveAccount(
+        saveAccount(account);
+                const embed = new EmbedBuilder()
 
-            guildId,
+            .setColor(
 
-            userId,
+                isSmoke
 
-            account
+                    ? 0x2ECC71
 
-        );
+                    : 0x95A5A6
 
-        const embed = new EmbedBuilder()
+            )
 
-            .setColor(isSmoke ? 0x57F287 : 0x95A5A6)
-
-            .setTitle("🚬 Smoke Session")
+            .setTitle(`${emoji} Smoke Session`)
 
             .setDescription(
 
-                `${interaction.user} smoked **${smoke.name}**.`
+                `${interaction.user} smoked **${smoke.name}**.\n\n${effectMessage}`
 
             )
 
@@ -241,13 +339,19 @@ module.exports = {
 
                 {
 
-                    name: isSmoke ? "🌿 Highness" : "🚬 Nicotine",
+                    name: "🌿 Highness",
 
-                    value: isSmoke
+                    value: `${account.highness || 0}%`,
 
-                        ? `${account.highness}%`
+                    inline: true
 
-                        : `${account.nicotine}%`,
+                },
+
+                {
+
+                    name: "🚬 Nicotine",
+
+                    value: `${account.nicotine || 0}%`,
 
                     inline: true
 
@@ -262,37 +366,6 @@ module.exports = {
             })
 
             .setTimestamp();
-                    if (
-
-            isSmoke &&
-
-            organization?.highRole
-
-        ) {
-
-            const role = interaction.guild.roles.cache.get(
-
-                organization.highRole
-
-            );
-
-            if (
-
-                role &&
-
-                interaction.guild.members.me.roles.highest.position >
-
-                role.position &&
-
-                !interaction.member.roles.cache.has(role.id)
-
-            ) {
-
-                await interaction.member.roles.add(role).catch(() => {});
-
-            }
-
-        }
 
         return interaction.reply({
 
