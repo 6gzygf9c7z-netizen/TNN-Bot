@@ -6,7 +6,7 @@ const {
 const menu = require("../data/menu.json");
 
 const {
-    getOrCreateAccount,
+    getAccount,
     saveAccount
 } = require("../core/accountsEngine");
 
@@ -14,47 +14,21 @@ const {
     addItem
 } = require("../core/inventoryEngine");
 
-const {
-    addBill
-} = require("../core/economyEngine");
-
-const {
-    getOrganization
-} = require("../core/organizationEngine");
-
 module.exports = {
 
     data: new SlashCommandBuilder()
 
         .setName("buy")
 
-        .setDescription("Buy an item from the cafeteria.")
+        .setDescription("Purchase an item from the cafeteria.")
 
         .addStringOption(option =>
 
             option
-
                 .setName("item")
-
-                .setDescription("Item to purchase")
-
+                .setDescription("Select an item to purchase")
                 .setRequired(true)
-
                 .setAutocomplete(true)
-
-        )
-
-        .addIntegerOption(option =>
-
-            option
-
-                .setName("quantity")
-
-                .setDescription("Quantity")
-
-                .setMinValue(1)
-
-                .setRequired(false)
 
         ),
 
@@ -68,18 +42,11 @@ module.exports = {
 
         for (const category of Object.values(menu)) {
 
-            if (!category || typeof category !== "object") continue;
-
-            for (const [id, item] of Object.entries(category)) {
-
-                if (!item?.name) continue;
+            for (const [itemId, item] of Object.entries(category)) {
 
                 choices.push({
-
                     name: item.name,
-
-                    value: id
-
+                    value: itemId
                 });
 
             }
@@ -89,9 +56,7 @@ module.exports = {
         const filtered = choices
 
             .filter(choice =>
-
                 choice.name.toLowerCase().includes(focused)
-
             )
 
             .slice(0, 25);
@@ -106,44 +71,14 @@ module.exports = {
 
         const userId = interaction.user.id;
 
-        const organization = getOrganization(guildId);
+        const account = getAccount(userId);
 
-        const account = getOrCreateAccount(
-
-            userId,
-
-            guildId
-
-        );
-
-        const itemId = interaction.options.getString("item");
-
-        const quantity = interaction.options.getInteger("quantity") || 1;
-                let item = null;
-
-        let categoryName = null;
-
-        for (const [category, items] of Object.entries(menu)) {
-
-            if (!items || typeof items !== "object") continue;
-
-            if (items[itemId]) {
-
-                item = items[itemId];
-
-                categoryName = category;
-
-                break;
-
-            }
-
-        }
-
-        if (!item) {
+        if (!account) {
 
             return interaction.reply({
 
-                content: "❌ That item doesn't exist.",
+                content:
+                    "❌ You don't have an account yet.",
 
                 ephemeral: true
 
@@ -151,29 +86,47 @@ module.exports = {
 
         }
 
-        const totalCost = item.price * quantity;
+        const itemId = interaction.options.getString("item");
 
-        addBill(
+        let selectedItem = null;
 
-            guildId,
+        for (const category of Object.values(menu)) {
 
-            userId,
+            if (category[itemId]) {
 
-            {
+                selectedItem = category[itemId];
 
-                type: "cafeteria",
-
-                item: item.name,
-
-                quantity,
-
-                amount: totalCost,
-
-                timestamp: Date.now()
+                break;
 
             }
 
-        );
+        }
+
+        if (!selectedItem) {
+
+            return interaction.reply({
+
+                content:
+                    "❌ That item doesn't exist.",
+
+                ephemeral: true
+
+            });
+
+        }
+                account.debt += selectedItem.price;
+
+        if (!account.statistics) {
+
+            account.statistics = {};
+
+        }
+
+        account.statistics.moneySpent =
+            (account.statistics.moneySpent || 0) +
+            selectedItem.price;
+
+        saveAccount(account);
 
         addItem(
 
@@ -183,23 +136,19 @@ module.exports = {
 
             itemId,
 
-            quantity
+            1
 
         );
 
-        account.updatedAt = Date.now();
-
-        saveAccount(account);
-
         const embed = new EmbedBuilder()
 
-            .setColor(0x3498DB)
+            .setColor(0xF39C12)
 
             .setTitle("🛒 Purchase Successful")
 
             .setDescription(
 
-                `${interaction.user} purchased **${quantity} × ${item.name}**.`
+                `You purchased **${selectedItem.name}**.`
 
             )
 
@@ -207,19 +156,9 @@ module.exports = {
 
                 {
 
-                    name: "Category",
+                    name: "💳 Added to Debt",
 
-                    value: categoryName,
-
-                    inline: true
-
-                },
-
-                {
-
-                    name: "Unit Price",
-
-                    value: `₦${item.price.toLocaleString()}`,
+                    value: `₦${selectedItem.price.toLocaleString()}`,
 
                     inline: true
 
@@ -227,9 +166,9 @@ module.exports = {
 
                 {
 
-                    name: "Total Bill",
+                    name: "📋 Total Debt",
 
-                    value: `₦${totalCost.toLocaleString()}`,
+                    value: `₦${account.debt.toLocaleString()}`,
 
                     inline: true
 
@@ -239,7 +178,7 @@ module.exports = {
 
             .setFooter({
 
-                text: `${organization?.name || "Organization"} Cafeteria`
+                text: "TNN Cafeteria • Payment will be deducted from your next salary."
 
             })
 
