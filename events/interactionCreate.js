@@ -6,19 +6,64 @@ module.exports = {
 
     async execute(interaction, client) {
 
-        if (!interaction.isChatInputCommand()) {
+        /*
+        ============================
+        AUTOCOMPLETE
+        ============================
+        */
+
+        if (interaction.isAutocomplete()) {
+
+            const command = client.commands.get(
+
+                interaction.commandName
+
+            );
+
+            if (!command?.autocomplete) {
+
+                return;
+
+            }
+
+            try {
+
+                await command.autocomplete(interaction);
+
+            } catch (error) {
+
+                console.error(error);
+
+            }
+
             return;
+
+        }
+
+        /*
+        ============================
+        SLASH COMMANDS
+        ============================
+        */
+
+        if (!interaction.isChatInputCommand()) {
+
+            return;
+
         }
 
         const command = client.commands.get(
+
             interaction.commandName
+
         );
 
         if (!command) {
-            return;
-        }
 
-        try {
+            return;
+
+        }
+                try {
 
             await command.execute(interaction);
 
@@ -27,14 +72,21 @@ module.exports = {
             console.error(error);
 
             const reply = {
-                content: "An error occurred while executing this command.",
+
+                content: "❌ An error occurred while executing this command.",
+
                 ephemeral: true
+
             };
 
             if (interaction.replied || interaction.deferred) {
+
                 await interaction.followUp(reply);
+
             } else {
+
                 await interaction.reply(reply);
+
             }
 
         }
