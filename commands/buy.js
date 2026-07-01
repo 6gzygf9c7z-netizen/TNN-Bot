@@ -16,7 +16,7 @@ const {
 
 const {
     addBill
-} = require("../core/billsEngine");
+} = require("../core/economyEngine");
 
 const {
     getOrganization
