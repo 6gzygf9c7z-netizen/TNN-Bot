@@ -8,41 +8,77 @@ const menu = require("../data/menu.json");
 const {
     getOrCreateAccount,
     saveAccount
-} = require("../core/accountsEngine");
+} = require("../core/accountEngine");
 
 const {
-    hasItem,
+    getInventory,
     removeItem
 } = require("../core/inventoryEngine");
 
 const {
     applyEffect,
     combineEffects
-} = require("../core/effectsEngine");
+} = require("../core/effectEngine");
 
 const {
     getOrganization
 } = require("../core/organizationEngine");
 
 module.exports = {
-
     data: new SlashCommandBuilder()
-
         .setName("smoke")
-
-        .setDescription("Smoke cannabis or cigarettes from your inventory.")
-
+        .setDescription("Smoke cannabis or cigarettes.")
         .addStringOption(option =>
-
             option
-
                 .setName("item")
-
-                .setDescription("What you want to smoke")
-
+                .setDescription("Item to smoke")
                 .setRequired(true)
-
+                .setAutocomplete(true)
         ),
+
+    async autocomplete(interaction) {
+
+        const focused = interaction.options
+            .getFocused()
+            .toLowerCase();
+
+        const choices = [];
+
+        if (menu.smoke) {
+
+            Object.entries(menu.smoke).forEach(([id, item]) => {
+
+                choices.push({
+                    name: item.name,
+                    value: id
+                });
+
+            });
+
+        }
+
+        if (menu.cigarettes) {
+
+            Object.entries(menu.cigarettes).forEach(([id, item]) => {
+
+                choices.push({
+                    name: item.name,
+                    value: id
+                });
+
+            });
+
+        }
+
+        const filtered = choices
+            .filter(choice =>
+                choice.name.toLowerCase().includes(focused)
+            )
+            .slice(0, 25);
+
+        return interaction.respond(filtered);
+
+    },
 
     async execute(interaction) {
 
@@ -52,21 +88,21 @@ module.exports = {
 
         const organization = getOrganization(guildId);
 
-        const itemId = interaction.options
+        const itemId = interaction.options.getString("item");
 
-            .getString("item")
+        const inventory = getInventory(guildId, userId);
 
-            .trim()
+        if (!inventory[itemId] || inventory[itemId] <= 0) {
 
-            .toLowerCase();
+            return interaction.reply({
 
-        const account = getOrCreateAccount(
+                content: "❌ You don't own this item.",
 
-            userId,
+                ephemeral: true
 
-            guildId
+            });
 
-        );
+        }
 
         let smoke = null;
 
@@ -74,9 +110,9 @@ module.exports = {
 
         let isCigarette = false;
 
-        if (menu.cannabis && menu.cannabis[itemId]) {
+        if (menu.smoke && menu.smoke[itemId]) {
 
-            smoke = menu.cannabis[itemId];
+            smoke = menu.smoke[itemId];
 
             isCannabis = true;
 
@@ -102,29 +138,13 @@ module.exports = {
 
         }
 
-        if (
+        const account = getOrCreateAccount(
 
-            !hasItem(
+            guildId,
 
-                guildId,
+            userId
 
-                userId,
-
-                itemId
-
-            )
-
-        ) {
-
-            return interaction.reply({
-
-                content: `❌ You don't own any **${smoke.name}**.`,
-
-                ephemeral: true
-
-            });
-
-        }
+        );
                 removeItem(
 
             guildId,
@@ -137,143 +157,83 @@ module.exports = {
 
         );
 
-        let effectMessage = "";
-
-        let emoji = "🚬";
-
-        if (isCannabis) {
-
-            const highGain = Math.floor(
-
-                Math.random() * 15
-
-            ) + 10;
+        if (isSmoke) {
 
             account.highness = Math.min(
 
                 100,
 
-                (account.highness || 0) + highGain
+                (account.highness || 0) + 25
 
             );
 
-            applyEffect(userId, {
+            account.mood = Math.min(
 
-                name: "high",
+                100,
 
-                intensity: account.highness,
+                (account.mood || 50) + 5
 
-                duration: 30 * 60 * 1000,
+            );
 
-                source: itemId
+            account.energy = Math.max(
 
-            });
+                0,
 
-            combineEffects(userId);
+                (account.energy || 100) - 3
 
-            emoji = "🌿";
+            );
 
-            if (account.highness <= 20) {
+            applyEffect(
 
-                effectMessage = "😌 You feel relaxed... everything seems calmer.";
+                account,
 
-            } else if (account.highness <= 40) {
+                smoke.currentEffect || itemId
 
-                effectMessage = "😂 You're smiling at absolutely nothing.";
-
-            } else if (account.highness <= 70) {
-
-                effectMessage = "🍕 You're convinced food has never tasted this good.";
-
-            } else {
-
-                effectMessage = "🚀 You've left planet Earth... enjoy the trip.";
-
-            }
-
-            if (
-
-                organization?.highRole &&
-
-                interaction.guild.members.me.roles.highest.position >
-
-                interaction.guild.roles.cache.get(
-
-                    organization.highRole
-
-                )?.position
-
-            ) {
-
-                await interaction.member.roles.add(
-
-                    organization.highRole
-
-                ).catch(() => {});
-
-            }
+            );
 
         }
 
         if (isCigarette) {
 
-            const nicotineGain = Math.floor(
-
-                Math.random() * 10
-
-            ) + 5;
-
             account.nicotine = Math.min(
 
                 100,
 
-                (account.nicotine || 0) + nicotineGain
+                (account.nicotine || 0) + 10
 
             );
 
-            emoji = "🚬";
+            account.stress = Math.max(
 
-            if (account.nicotine <= 20) {
+                0,
 
-                effectMessage = "😮‍💨 A light puff... nothing too serious.";
+                (account.stress || 0) - 5
 
-            } else if (account.nicotine <= 40) {
-
-                effectMessage = "🚬 You needed that smoke break.";
-
-            } else if (account.nicotine <= 70) {
-
-                effectMessage = "😵 You're becoming heavily dependent on nicotine.";
-
-            } else {
-
-                effectMessage = "☠️ Chain smoking isn't doing your lungs any favours.";
-
-            }
+            );
 
         }
 
-        account.updatedAt = Date.now();
+        combineEffects(account);
 
-        saveAccount(account);
+        saveAccount(
+
+            guildId,
+
+            userId,
+
+            account
+
+        );
 
         const embed = new EmbedBuilder()
 
-            .setColor(
+            .setColor(isSmoke ? 0x57F287 : 0x95A5A6)
 
-                isCannabis
-
-                    ? 0x2ECC71
-
-                    : 0x95A5A6
-
-            )
-
-            .setTitle(`${emoji} Smoke Session`)
+            .setTitle("🚬 Smoke Session")
 
             .setDescription(
 
-                `${interaction.user} smoked **${smoke.name}**.\n\n${effectMessage}`
+                `${interaction.user} smoked **${smoke.name}**.`
 
             )
 
@@ -281,19 +241,13 @@ module.exports = {
 
                 {
 
-                    name: "🌿 Highness",
+                    name: isSmoke ? "🌿 Highness" : "🚬 Nicotine",
 
-                    value: `${account.highness || 0}%`,
+                    value: isSmoke
 
-                    inline: true
+                        ? `${account.highness}%`
 
-                },
-
-                {
-
-                    name: "🚬 Nicotine",
-
-                    value: `${account.nicotine || 0}%`,
+                        : `${account.nicotine}%`,
 
                     inline: true
 
@@ -308,6 +262,37 @@ module.exports = {
             })
 
             .setTimestamp();
+                    if (
+
+            isSmoke &&
+
+            organization?.highRole
+
+        ) {
+
+            const role = interaction.guild.roles.cache.get(
+
+                organization.highRole
+
+            );
+
+            if (
+
+                role &&
+
+                interaction.guild.members.me.roles.highest.position >
+
+                role.position &&
+
+                !interaction.member.roles.cache.has(role.id)
+
+            ) {
+
+                await interaction.member.roles.add(role).catch(() => {});
+
+            }
+
+        }
 
         return interaction.reply({
 
