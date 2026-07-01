@@ -15,6 +15,10 @@ const {
     removeItem
 } = require("../core/inventoryEngine");
 
+const {
+    getOrganization
+} = require("../core/organizationEngine");
+
 module.exports = {
 
     data: new SlashCommandBuilder()
@@ -33,7 +37,47 @@ module.exports = {
 
                 .setRequired(true)
 
+                .setAutocomplete(true)
+
         ),
+
+    async autocomplete(interaction) {
+
+        const focused = interaction.options
+            .getFocused()
+            .toLowerCase();
+
+        const choices = [];
+
+        if (menu.food) {
+
+            Object.entries(menu.food).forEach(([id, item]) => {
+
+                choices.push({
+
+                    name: item.name,
+
+                    value: id
+
+                });
+
+            });
+
+        }
+
+        const filtered = choices
+
+            .filter(choice =>
+
+                choice.name.toLowerCase().includes(focused)
+
+            )
+
+            .slice(0, 25);
+
+        return interaction.respond(filtered);
+
+    },
 
     async execute(interaction) {
 
@@ -41,39 +85,25 @@ module.exports = {
 
         const userId = interaction.user.id;
 
-        const input = interaction.options
+        const organization = getOrganization(guildId);
+
+        const itemId = interaction.options
+
             .getString("item")
+
             .trim()
+
             .toLowerCase();
 
         const account = getOrCreateAccount(
+
             userId,
+
             guildId
+
         );
 
-        let itemId = null;
-
-        let food = null;
-
-        for (const [id, item] of Object.entries(menu.food)) {
-
-            if (
-
-                item.name.toLowerCase() === input ||
-
-                id === input
-
-            ) {
-
-                itemId = id;
-
-                food = item;
-
-                break;
-
-            }
-
-        }
+        const food = menu.food?.[itemId];
 
         if (!food) {
 
@@ -110,8 +140,7 @@ module.exports = {
             });
 
         }
-
-        removeItem(
+                removeItem(
 
             guildId,
 
@@ -123,26 +152,61 @@ module.exports = {
 
         );
 
+        const hungerGain = Math.floor(
+
+            Math.random() * 15
+
+        ) + 15;
+
         account.hunger = Math.min(
 
             100,
 
-            (account.hunger || 100) + 35
+            (account.hunger || 0) + hungerGain
 
         );
-                account.updatedAt = Date.now();
+
+        account.mood = Math.min(
+
+            100,
+
+            (account.mood || 50) + 3
+
+        );
+
+        let effectMessage = "";
+
+        if (account.hunger <= 20) {
+
+            effectMessage = "😬 You're still hungry... maybe grab another meal.";
+
+        } else if (account.hunger <= 50) {
+
+            effectMessage = "🙂 That helped... you're feeling better.";
+
+        } else if (account.hunger <= 80) {
+
+            effectMessage = "😋 Delicious... you're comfortably full.";
+
+        } else {
+
+            effectMessage = "🤰 You're absolutely stuffed... no more food for now.";
+
+        }
+
+        account.updatedAt = Date.now();
 
         saveAccount(account);
 
         const embed = new EmbedBuilder()
 
-            .setColor(0x2ECC71)
+            .setColor(0xF1C40F)
 
-            .setTitle("🍽️ Meal Consumed")
+            .setTitle("🍽️ Meal Enjoyed")
 
             .setDescription(
 
-                `${interaction.user} ate **${food.name}**.\n\n😋 Delicious!`
+                `${interaction.user} ate **${food.name}**.\n\n${effectMessage}`
 
             )
 
@@ -150,7 +214,7 @@ module.exports = {
 
                 {
 
-                    name: "🍗 Hunger",
+                    name: "🍔 Hunger",
 
                     value: `${account.hunger}%`,
 
@@ -160,9 +224,9 @@ module.exports = {
 
                 {
 
-                    name: "📦 Inventory",
+                    name: "😊 Mood",
 
-                    value: `1 × ${food.name} consumed`,
+                    value: `${account.mood}%`,
 
                     inline: true
 
@@ -172,7 +236,7 @@ module.exports = {
 
             .setFooter({
 
-                text: "TNN Cafeteria"
+                text: `${organization?.name || "Organization"} Cafeteria`
 
             })
 

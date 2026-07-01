@@ -42,7 +42,63 @@ module.exports = {
 
                 .setRequired(true)
 
+                .setAutocomplete(true)
+
         ),
+
+    async autocomplete(interaction) {
+
+        const focused = interaction.options
+            .getFocused()
+            .toLowerCase();
+
+        const choices = [];
+
+        if (menu.drinks) {
+
+            Object.entries(menu.drinks).forEach(([id, item]) => {
+
+                choices.push({
+
+                    name: item.name,
+
+                    value: id
+
+                });
+
+            });
+
+        }
+
+        if (menu.alcohol) {
+
+            Object.entries(menu.alcohol).forEach(([id, item]) => {
+
+                choices.push({
+
+                    name: item.name,
+
+                    value: id
+
+                });
+
+            });
+
+        }
+
+        const filtered = choices
+
+            .filter(choice =>
+
+                choice.name.toLowerCase().includes(focused)
+
+            )
+
+            .slice(0, 25);
+
+        return interaction.respond(filtered);
+
+    },
 
     async execute(interaction) {
 
@@ -137,13 +193,13 @@ module.exports = {
 
             100,
 
-            (account.hydration || 100) + 20
+            (account.hydration || 0) + 20
 
         );
 
-        let effectMessage = "💧 Refreshing drink...";
-
         let emoji = "🥤";
+
+        let effectMessage = "💧 Refreshing...";
 
         if (isAlcohol) {
 
@@ -183,37 +239,45 @@ module.exports = {
 
             } else if (account.intoxication <= 40) {
 
-                effectMessage = "🥴 You're beginning to slur your words...";
+                effectMessage = "🥴 You're starting to feel it...";
 
             } else if (account.intoxication <= 70) {
 
-                effectMessage = "🍻 You're obviously drunk now... everyone can tell.";
+                effectMessage = "🍻 You're obviously drunk now.";
 
             } else {
 
-                effectMessage = "☠️ You're completely wasted... someone should probably take your keys.";
+                effectMessage = "☠️ You're completely wasted.";
 
             }
 
             if (
 
-                organization?.drunkRole &&
-
-                interaction.guild.members.me.roles.highest.position >
-
-                interaction.guild.roles.cache.get(
-
-                    organization.drunkRole
-
-                )?.position
+                organization?.drunkRole
 
             ) {
 
-                await interaction.member.roles.add(
+                const role = interaction.guild.roles.cache.get(
 
                     organization.drunkRole
 
-                ).catch(() => {});
+                );
+
+                if (
+
+                    role &&
+
+                    interaction.guild.members.me.roles.highest.position >
+
+                    role.position &&
+
+                    !interaction.member.roles.cache.has(role.id)
+
+                ) {
+
+                    await interaction.member.roles.add(role).catch(() => {});
+
+                }
 
             }
 

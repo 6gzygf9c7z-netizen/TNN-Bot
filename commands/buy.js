@@ -11,9 +11,16 @@ const {
 } = require("../core/accountsEngine");
 
 const {
-    createInventory,
     addItem
 } = require("../core/inventoryEngine");
+
+const {
+    addBill
+} = require("../core/billsEngine");
+
+const {
+    getOrganization
+} = require("../core/organizationEngine");
 
 module.exports = {
 
@@ -21,7 +28,7 @@ module.exports = {
 
         .setName("buy")
 
-        .setDescription("Purchase an item from the TNN Cafeteria.")
+        .setDescription("Buy an item from the cafeteria.")
 
         .addStringOption(option =>
 
@@ -33,52 +40,110 @@ module.exports = {
 
                 .setRequired(true)
 
+                .setAutocomplete(true)
+
+        )
+
+        .addIntegerOption(option =>
+
+            option
+
+                .setName("quantity")
+
+                .setDescription("Quantity")
+
+                .setMinValue(1)
+
+                .setRequired(false)
+
         ),
 
-    async execute(interaction) {
+    async autocomplete(interaction) {
 
-        const search = interaction.options
-            .getString("item")
-            .trim()
+        const focused = interaction.options
+            .getFocused()
             .toLowerCase();
 
-        let selectedItem = null;
-        let selectedItemId = null;
-        let selectedCategory = null;
+        const choices = [];
 
-        for (const [categoryName, category] of Object.entries(menu)) {
+        for (const category of Object.values(menu)) {
 
-            for (const [itemId, item] of Object.entries(category)) {
+            if (!category || typeof category !== "object") continue;
 
-                if (
+            for (const [id, item] of Object.entries(category)) {
 
-                    item.name.toLowerCase() === search ||
+                if (!item?.name) continue;
 
-                    itemId.toLowerCase() === search ||
+                choices.push({
 
-                    item.currentEffect.toLowerCase() === search
+                    name: item.name,
 
-                ) {
+                    value: id
 
-                    selectedItem = item;
-                    selectedItemId = itemId;
-                    selectedCategory = categoryName;
-
-                    break;
-
-                }
+                });
 
             }
 
-            if (selectedItem) break;
+        }
+
+        const filtered = choices
+
+            .filter(choice =>
+
+                choice.name.toLowerCase().includes(focused)
+
+            )
+
+            .slice(0, 25);
+
+        return interaction.respond(filtered);
+
+    },
+
+    async execute(interaction) {
+
+        const guildId = interaction.guild.id;
+
+        const userId = interaction.user.id;
+
+        const organization = getOrganization(guildId);
+
+        const account = getOrCreateAccount(
+
+            userId,
+
+            guildId
+
+        );
+
+        const itemId = interaction.options.getString("item");
+
+        const quantity = interaction.options.getInteger("quantity") || 1;
+                let item = null;
+
+        let categoryName = null;
+
+        for (const [category, items] of Object.entries(menu)) {
+
+            if (!items || typeof items !== "object") continue;
+
+            if (items[itemId]) {
+
+                item = items[itemId];
+
+                categoryName = category;
+
+                break;
+
+            }
 
         }
 
-        if (!selectedItem) {
+        if (!item) {
 
             return interaction.reply({
 
-                content: "❌ Item not found on the cafeteria menu.",
+                content: "❌ That item doesn't exist.",
 
                 ephemeral: true
 
@@ -86,64 +151,55 @@ module.exports = {
 
         }
 
-        const account = getOrCreateAccount(
+        const totalCost = item.price * quantity;
 
-            interaction.user.id,
+        addBill(
 
-            interaction.guild.id
+            guildId,
+
+            userId,
+
+            {
+
+                type: "cafeteria",
+
+                item: item.name,
+
+                quantity,
+
+                amount: totalCost,
+
+                timestamp: Date.now()
+
+            }
 
         );
 
-        createInventory(
+        addItem(
 
-            interaction.guild.id,
+            guildId,
 
-            interaction.user.id
+            userId,
+
+            itemId,
+
+            quantity
 
         );
-                account.debt += selectedItem.price;
-
-        account.statistics.moneySpent += selectedItem.price;
 
         account.updatedAt = Date.now();
 
         saveAccount(account);
 
-        addItem(
-
-            interaction.guild.id,
-
-            interaction.user.id,
-
-            selectedItemId,
-
-            1
-
-        );
-
-        const icons = {
-
-            food: "🍔",
-
-            drinks: "🥤",
-
-            alcohol: "🍺",
-
-            smoke: "🌿",
-
-            cigarettes: "🚬"
-
-        };
-
         const embed = new EmbedBuilder()
 
-            .setColor(0x2ECC71)
+            .setColor(0x3498DB)
 
-            .setTitle("🛒 Cafeteria Purchase")
+            .setTitle("🛒 Purchase Successful")
 
             .setDescription(
 
-                `${icons[selectedCategory] || "📦"} **${selectedItem.name}** has been added to your inventory.`
+                `${interaction.user} purchased **${quantity} × ${item.name}**.`
 
             )
 
@@ -151,19 +207,9 @@ module.exports = {
 
                 {
 
-                    name: "Payment Method",
+                    name: "Category",
 
-                    value: "🏢 Company Credit",
-
-                    inline: true
-
-                },
-
-                {
-
-                    name: "Purchase Cost",
-
-                    value: `₦${selectedItem.price.toLocaleString()}`,
+                    value: categoryName,
 
                     inline: true
 
@@ -171,9 +217,9 @@ module.exports = {
 
                 {
 
-                    name: "Outstanding Debt",
+                    name: "Unit Price",
 
-                    value: `₦${account.debt.toLocaleString()}`,
+                    value: `₦${item.price.toLocaleString()}`,
 
                     inline: true
 
@@ -181,11 +227,11 @@ module.exports = {
 
                 {
 
-                    name: "Inventory Updated",
+                    name: "Total Bill",
 
-                    value: `✅ 1 × ${selectedItem.name}`,
+                    value: `₦${totalCost.toLocaleString()}`,
 
-                    inline: false
+                    inline: true
 
                 }
 
@@ -193,7 +239,7 @@ module.exports = {
 
             .setFooter({
 
-                text: "Bills can be settled later using /clearbills"
+                text: `${organization?.name || "Organization"} Cafeteria`
 
             })
 
